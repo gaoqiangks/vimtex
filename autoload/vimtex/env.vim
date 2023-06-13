@@ -427,13 +427,18 @@ endfunction
 
 function! s:change_prompt(type) abort " {{{1
   let [l:open, l:close] = vimtex#env#get_surrounding(a:type)
+  let g:open=l:open
   if empty(l:open) | return | endif
 
+  let l:open_match=matchaddpos('Search',[[l:open.lnum, l:open.cnum, l:open.cnum+strlen(l:open.match)]])
+  let l:close_match=matchaddpos('Search',[[l:close.lnum, l:close.cnum, l:close.cnum+strlen(l:close.match)]])
+  redraw!
+  let l:ret=""
   if g:vimtex_env_change_autofill
     let l:name = get(l:open, 'name', l:open.match)
     let s:env_name = l:name
-    return vimtex#ui#input({
-          \ 'prompt': 'Change surrounding environment: ',
+    let l:ret=vimtex#ui#input({
+          \ 'prompt': '<'.l:name.'> is changed to:',
           \ 'default': l:name,
           \ 'completion': 'customlist,vimtex#env#input_complete',
           \})
@@ -442,12 +447,15 @@ function! s:change_prompt(type) abort " {{{1
           \ ? l:open.match . ' ... ' . l:open.corr
           \ : l:open.match . ' ... ' . l:open.corr)
     let s:env_name = l:name
-    return vimtex#ui#input({
+    let l:ret=vimtex#ui#input({
           \ 'info':
           \   ['Change surrounding environment: ', ['VimtexWarning', l:name]],
           \ 'completion': 'customlist,vimtex#env#input_complete',
           \})
   endif
+  call matchdelete(l:open_match)
+  call matchdelete(l:close_match)
+  return l:ret
 endfunction
 
 " }}}1
