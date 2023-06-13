@@ -432,11 +432,12 @@ function! s:change_prompt(type) abort " {{{1
 
   let l:open_match=matchaddpos('Search',[[l:open.lnum, l:open.cnum, l:open.cnum+strlen(l:open.match)]])
   let l:close_match=matchaddpos('Search',[[l:close.lnum, l:close.cnum, l:close.cnum+strlen(l:close.match)]])
-  redraw!
+  redraw
   let l:ret=""
   if g:vimtex_env_change_autofill
     let l:name = get(l:open, 'name', l:open.match)
     let s:env_name = l:name
+	echo l:name
     let l:ret=vimtex#ui#input({
           \ 'prompt': '<'.l:name.'> is changed to:',
           \ 'default': l:name,
