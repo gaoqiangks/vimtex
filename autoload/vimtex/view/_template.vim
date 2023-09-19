@@ -83,6 +83,10 @@ function! s:viewer.compiler_callback(outfile) dict abort " {{{1
 
   call self._start(a:outfile)
   let self.started_through_callback = 1
+
+  if exists('#User#VimtexEventView')
+    doautocmd <nomodeline> User VimtexEventView
+  endif
 endfunction
 
 " }}}1
@@ -257,8 +261,8 @@ function! s:viewer.xdo_focus_vim() dict abort " {{{1
     let l:xwinids = filter(reverse(l:output), '!empty(v:val)')
 
     if !empty(l:xwinids)
+      call vimtex#jobs#run('xdotool mousemove --window '. l:xwinids[0] . ' --polar 0 0')
       call vimtex#jobs#run('xdotool windowactivate ' . l:xwinids[0] . ' &')
-      call feedkeys("\<c-l>", 'tn')
       return l:xwinids[0]
       break
     endif

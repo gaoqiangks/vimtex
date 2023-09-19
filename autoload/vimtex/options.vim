@@ -18,6 +18,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_compiler_enabled', 1)
   call s:init_option('vimtex_compiler_silent', 0)
   call s:init_option('vimtex_compiler_method', 'latexmk')
+  call s:init_option('vimtex_compiler_clean_paths', [])
   call s:init_option('vimtex_compiler_latexmk_engines', {
         \  '_'                : '-pdf',
         \  'pdfdvi'           : '-pdfdvi',
@@ -185,6 +186,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_imaps_leader', '`')
   call s:init_option('vimtex_imaps_list', [
         \ { 'lhs' : '0',  'rhs' : '\emptyset' },
+        \ { 'lhs' : '2',  'rhs' : '\sqrt' },
         \ { 'lhs' : '6',  'rhs' : '\partial' },
         \ { 'lhs' : '8',  'rhs' : '\infty' },
         \ { 'lhs' : '=',  'rhs' : '\equiv' },
@@ -200,7 +202,9 @@ function! vimtex#options#init() abort " {{{1
         \ { 'lhs' : '(',  'rhs' : '\subset' },
         \ { 'lhs' : ')',  'rhs' : '\supset' },
         \ { 'lhs' : 'A',  'rhs' : '\forall' },
+        \ { 'lhs' : 'B',  'rhs' : '\boldsymbol' },
         \ { 'lhs' : 'E',  'rhs' : '\exists' },
+        \ { 'lhs' : 'N',  'rhs' : '\nabla' },
         \ { 'lhs' : 'jj', 'rhs' : '\downarrow' },
         \ { 'lhs' : 'jJ', 'rhs' : '\Downarrow' },
         \ { 'lhs' : 'jk', 'rhs' : '\uparrow' },
@@ -345,6 +349,8 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_syntax_conceal_disable', 0)
   call s:init_option('vimtex_syntax_custom_cmds', [])
   call s:init_option('vimtex_syntax_custom_cmds_with_concealed_delims', [])
+  call s:init_option('vimtex_syntax_custom_envs', [])
+  call s:init_option('vimtex_syntax_match_unicode', v:true)
   call s:init_option('vimtex_syntax_nested', {
         \ 'aliases' : {
         \   'C' : 'c',
@@ -445,6 +451,12 @@ function! vimtex#options#init() abort " {{{1
         \ 'dfrac': 'INLINE',
         \})
 
+  call s:init_option('vimtex_ui_method', {
+        \ 'confirm': has('nvim') ? 'nvim' : 'legacy',
+        \ 'input': has('nvim') ? 'nvim' : 'legacy',
+        \ 'select': has('nvim') ? 'nvim' : 'legacy',
+        \})
+
   call s:init_option('vimtex_view_enabled', 1)
   call s:init_option('vimtex_view_automatic', 1)
   call s:init_option('vimtex_view_method', 'general')
@@ -481,6 +493,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_view_skim_activate', 0)
   call s:init_option('vimtex_view_skim_sync', 0)
   call s:init_option('vimtex_view_skim_reading_bar', 0)
+  call s:init_option('vimtex_view_skim_no_select', 0)
   call s:init_option('vimtex_view_texshop_activate', 0)
   call s:init_option('vimtex_view_texshop_sync', 0)
   call s:init_option('vimtex_view_zathura_options', '')
