@@ -450,7 +450,7 @@ function! s:change_prompt(type) abort " {{{1
     let s:env_name = l:name
     let l:ret=vimtex#ui#input({
           \ 'info':
-          \   ['Change surrounding environment: ', ['VimtexWarning', l:name]],
+          \   ['Change surrounding environment: ', ['VimtexWarning', "current env: ".l:name]],
           \ 'completion': 'customlist,vimtex#env#input_complete',
           \})
   endif
