@@ -452,6 +452,7 @@ function! s:change_prompt(type) abort " {{{1
           \ 'info':
           \   ['Change surrounding environment: ', ['VimtexWarning', "current env: ".l:name]],
           \ 'completion': 'customlist,vimtex#env#input_complete',
+		  \ 'user_defined_prompt':"当前环境 ".l:name.", 将被修改为:",
           \})
   endif
   call matchdelete(l:open_match)

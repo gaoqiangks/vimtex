@@ -27,8 +27,12 @@ endfunction
 
 " }}}1
 function! vimtex#ui#input(options) abort " {{{1
+  let l:user_defined_prompt=">"
+  if(has_key(a:options, "user_defined_prompt"))
+	  let l:user_defined_prompt=a:options["user_defined_prompt"]
+  endif
   let l:options = extend({
-        \ 'prompt': '> ',
+        \ 'prompt': l:user_defined_prompt,
         \ 'text': '',
         \ 'info': '',
         \}, a:options)
