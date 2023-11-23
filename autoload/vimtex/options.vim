@@ -311,7 +311,9 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_lint_chktex_ignore_warnings',
         \ '-n1 -n3 -n8 -n25 -n36')
 
-  call s:init_option('vimtex_parser_bib_backend', 'bibtex')
+  call s:init_option('vimtex_parser_bib_backend',
+        \ has('nvim') ? 'lua' : 'bibtex'
+        \)
   call s:init_option('vimtex_parser_cmd_separator_check',
         \ 'vimtex#cmd#parser_separator_check')
 
@@ -461,7 +463,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_view_enabled', 1)
   call s:init_option('vimtex_view_automatic', 1)
   call s:init_option('vimtex_view_method', 'general')
-  call s:init_option('vimtex_view_use_temp_files', 0)
+  call s:init_option('vimtex_view_use_temp_files', v:false)
   call s:init_option('vimtex_view_forward_search_on_start', 1)
   call s:init_option('vimtex_view_reverse_search_edit_cmd', 'edit')
 
