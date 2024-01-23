@@ -132,12 +132,12 @@ function! s:compiler.__init() abort dict " {{{1
 endfunction
 
 " }}}1
-function! s:compiler.__build_cmd() abort dict " {{{1
+function! s:compiler.__build_cmd(passed_options) abort dict " {{{1
   let l:cmd = (has('win32')
         \ ? 'set max_print_line=2000 & '
         \ : 'max_print_line=2000 ') . self.executable
 
-  let l:cmd .= ' ' . join(self.options)
+  let l:cmd .= ' ' . join(self.options) . a:passed_options
   let l:cmd .= ' ' . self.get_engine()
 
   if !empty(self.out_dir)
@@ -163,7 +163,7 @@ function! s:compiler.__build_cmd() abort dict " {{{1
     endif
   endif
 
-  return l:cmd . ' ' . vimtex#util#shellescape(self.state.base)
+  return l:cmd . ' ' . vimtex#util#shellescape(self.file_info.target_basename)
 endfunction
 
 " }}}1
@@ -193,13 +193,13 @@ function! s:compiler.get_file(ext) abort dict " {{{1
         \ $VIMTEX_OUTPUT_DIRECTORY,
         \ self.aux_dir,
         \ self.out_dir,
-        \ self.state.root
+        \ self.file_info.root
         \]
     if empty(l:root) | continue | endif
 
-    let l:cand = printf('%s/%s.%s', l:root, self.state.name, a:ext)
+    let l:cand = printf('%s/%s.%s', l:root, self.file_info.jobname, a:ext)
     if !vimtex#paths#is_abs(l:root)
-      let l:cand = self.state.root . '/' . l:cand
+      let l:cand = self.file_info.root . '/' . l:cand
     endif
 
     if filereadable(l:cand)
@@ -238,20 +238,20 @@ function! s:compiler.clean(full) abort dict " {{{1
     let l:cmd .= ' -auxdir=' . fnameescape(self.aux_dir)
   endif
 
-  let l:cmd .= ' ' . vimtex#util#shellescape(self.state.base)
+  let l:cmd .= ' ' . vimtex#util#shellescape(self.file_info.target_basename)
 
-  call vimtex#jobs#run(l:cmd, {'cwd': self.state.root})
+  call vimtex#jobs#run(l:cmd, {'cwd': self.file_info.root})
 endfunction
 
 " }}}1
 function! s:compiler.get_engine() abort dict " {{{1
   " Parse tex_program from TeX directive
-  let l:tex_program_directive = self.state.get_tex_program()
+  let l:tex_program_directive = b:vimtex.get_tex_program()
   let l:tex_program = l:tex_program_directive
 
   " Parse tex_program from from pdf_mode option in .latexmkrc
-  let [l:pdf_mode, l:is_local] =
-        \ vimtex#compiler#latexmk#get_rc_opt(self.state.root, 'pdf_mode', 1, -1)
+  let [l:pdf_mode, l:is_local] = vimtex#compiler#latexmk#get_rc_opt(
+        \ self.file_info.root, 'pdf_mode', 1, -1)
 
   if l:pdf_mode >= 1 && l:pdf_mode <= 5
     let l:tex_program_pdfmode = [
@@ -289,10 +289,10 @@ function! s:compiler.__init_temp_files() abort dict " {{{1
 
   let l:root = !empty(self.out_dir)
         \ ? self.out_dir
-        \ : self.state.root
+        \ : self.file_info.root
   for l:ext in ['pdf', 'synctex.gz']
-    let l:source = printf('%s/%s.%s', l:root, self.state.name, l:ext)
-    let l:target = printf('%s/_%s.%s', l:root, self.state.name, l:ext)
+    let l:source = printf('%s/%s.%s', l:root, self.file_info.jobname, l:ext)
+    let l:target = printf('%s/_%s.%s', l:root, self.file_info.jobname, l:ext)
     let self.__temp_files[l:source] = l:target
   endfor
 
@@ -339,7 +339,7 @@ function! s:compare_with_latexmkrc(dict, option) abort " {{{1
   " Check if option is specified in .latexmkrc.
   " If it is, .latexmkrc should be respected!
   let l:value = vimtex#compiler#latexmk#get_rc_opt(
-        \ a:dict.state.root, a:option, 0, '')[0]
+        \ a:dict.file_info.root, a:option, 0, '')[0]
   if !empty(l:value)
     if !empty(a:dict[a:option]) && (a:dict[a:option] !=# l:value)
       call vimtex#log#warning(
