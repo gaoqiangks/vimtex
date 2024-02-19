@@ -53,19 +53,19 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
 
   " {{{2 TeX symbols and special characters
 
-  syntax match texLigature "--"
-  syntax match texLigature "---"
-  syntax match texLigature "\v%(``|''|,,)"
+  syntax match texLigature "---\?"
+  syntax match texLigature "``"
+  syntax match texLigature "''"
+  syntax match texLigature ",,"
   syntax match texTabularChar "&"
   syntax match texTabularChar "\\\\"
 
   " E.g.:  \$ \& \% \# \{ \} \_ \S \P
-  syntax match texSpecialChar "\%(\\\@<!\)\@<=\~"
+  syntax match texSpecialChar "\~"
   syntax match texSpecialChar "\\ "
-  syntax match texSpecialChar "\\[$&%#{}_@]"
+  syntax match texSpecialChar "\\[$&%#{}_@,;:!>]"
   syntax match texSpecialChar "\\[SP@]\ze[^a-zA-Z@]"
   syntax match texSpecialChar "\^\^\%(\S\|[0-9a-f]\{2}\)"
-  syntax match texSpecialChar "\\[,;:!>]"
 
   " }}}2
   " {{{2 Commands: general
@@ -559,8 +559,8 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
   " Math regions: Inline Math Zones
   let l:conceal = g:vimtex_syntax_conceal.math_bounds ? 'concealends' : ''
   execute 'syntax region texMathZoneLI matchgroup=texMathDelimZoneLI'
-          \ 'start="\%(\\\@<!\)\@<=\\("'
-          \ 'end="\%(\\\@<!\)\@<=\\)"'
+          \ 'start="\\("'
+          \ 'end="\\)"'
           \ 'contains=@texClusterMath'
           \ l:conceal
   execute 'syntax region texMathZoneLD matchgroup=texMathDelimZoneLD'
@@ -1955,7 +1955,9 @@ endfunction
 function! s:match_math_delims() abort " {{{1
   syntax match texMathDelimMod contained "\\\(left\|right\)\>"
   syntax match texMathDelimMod contained "\\[bB]igg\?[lr]\?\>"
-  syntax match texMathDelim contained "[()[\]]\|\\[{}]"
+  syntax match texMathDelim contained "[()[\]]"
+  syntax match texMathDelim contained "\\{"
+  syntax match texMathDelim contained "\\}"
   syntax match texMathDelim contained "\\backslash\>"
   syntax match texMathDelim contained "\\downarrow\>"
   syntax match texMathDelim contained "\\Downarrow\>"
@@ -2174,7 +2176,7 @@ endfunction
 
 " }}}1
 function! s:match_conceal_spacing() abort " {{{1
-  syntax match texSpecialChar "\%(\\\@<!\)\@<=\~" conceal cchar= 
+  syntax match texSpecialChar "\~"                conceal cchar= 
   syntax match texSpecialChar "\\ "               conceal cchar= 
   syntax match texSpecialChar "\\[,;:!>]"         conceal
   syntax match texSpecialChar "\\@\ze\s\+"        conceal
