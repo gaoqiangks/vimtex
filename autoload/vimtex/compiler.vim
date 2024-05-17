@@ -34,6 +34,8 @@ endfunction
 
 " }}}1
 function! vimtex#compiler#init_state(state) abort " {{{1
+  if !g:vimtex_compiler_enabled | return | endif
+
   let a:state.compiler = s:init_compiler({
         \ 'file_info': {
         \   'root': a:state.root,
@@ -169,14 +171,14 @@ function! vimtex#compiler#compile_selected(type) abort range " {{{1
   call l:compiler.wait()
 
   " Check if successful
-  if vimtex#qf#inquire(l:file.tex)
+  if vimtex#qf#inquire(l:state.tex)
     call vimtex#log#set_silent_restore()
     call vimtex#log#warning('Compiling selected lines ... failed!')
     botright cwindow
     return
   else
     call l:compiler.clean(0)
-    call b:vimtex.viewer.view(l:file.pdf)
+    call b:vimtex.viewer.view(l:state.pdf)
     call vimtex#log#set_silent_restore()
     call vimtex#log#info('Compiling selected lines ... done')
   endif
@@ -346,12 +348,10 @@ function! s:init_compiler(options) abort " {{{1
     let l:method = 'latexmk'
   endif
 
-  let l:options =
-        \ get(g:, 'vimtex_compiler_' . l:method, {})
-  let l:options = extend(deepcopy(l:options), a:options)
-  let l:compiler
-        \ = vimtex#compiler#{l:method}#init(l:options)
-  return l:compiler
+  let l:options = extend(
+        \ deepcopy(get(g:, 'vimtex_compiler_' . l:method, {})),
+        \ a:options)
+  return vimtex#compiler#{l:method}#init(l:options)
 endfunction
 
 " }}}1

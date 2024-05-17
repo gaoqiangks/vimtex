@@ -36,6 +36,7 @@ function! s:qf.set_errorformat() abort dict "{{{1
   setlocal errorformat+=%E!\ LaTeX\ %trror:\ %m
   setlocal errorformat+=%E%f:%l:\ %m
   setlocal errorformat+=%+ERunaway\ argument?
+  setlocal errorformat+=%-G{/%m
   setlocal errorformat+=%+C{%m
   setlocal errorformat+=%C!\ %m
 
@@ -61,6 +62,8 @@ function! s:qf.set_errorformat() abort dict "{{{1
 
   setlocal errorformat+=%+WUnderfull\ %\\%\\hbox%.%#\ at\ lines\ %l--%*\\d
   setlocal errorformat+=%+WUnderfull\ %\\%\\vbox%.%#\ at\ line\ %l
+
+  setlocal errorformat+=%+WMissing\ character:\ %m
 
   "
   " Define package related warnings
@@ -95,6 +98,8 @@ function! s:qf.set_errorformat() abort dict "{{{1
   setlocal errorformat+=%-Z(%.%#)\ %m\ on\ input\ line\ %l.
   setlocal errorformat+=%-C(%.%#)\ %m
 
+  setlocal errorformat+=%+W%.%#\ Warning:\ %m\ on\ input\ line\ %l.
+
   " Ignore unmatched lines
   setlocal errorformat+=%-G%.%#
 endfunction
@@ -121,6 +126,11 @@ function! s:qf.fix_paths(log) abort dict " {{{1
   let l:hbox_cache = {'index': {}, 'paths': {}}
 
   for l:qf in l:qflist
+    " Clean up some messages
+    if l:qf.lnum > 0 && l:qf.text =~# 'on input line \d\+.$'
+      let l:qf.text = substitute(l:qf.text, '\s*on input line \d\+.$', '', '')
+    endif
+
     " Handle missing buffer/filename: Fallback to the main file (this is always
     " correct in single-file projects and is thus a good fallback).
     if l:qf.bufnr == 0

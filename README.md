@@ -33,10 +33,10 @@ filetype and syntax plugin for LaTeX files.
 
 ## Requirements
 
-VimTeX requires Vim version 8.0.1453 or Neovim version 0.4.3. The requirements
-were updated in July 2020 after the release of VimTeX 1.0. If you are stuck
+VimTeX requires Vim version 8.2.3995 or Neovim version 0.9.5. The requirements
+were updated in April 2024 after the release of VimTeX 2.15. If you are stuck
 on older versions of Vim or Neovim, then you should not use the most recent
-version of VimTeX, but instead remain at the v1.0 tag.
+version of VimTeX, but instead remain at the v2.15 tag.
 
 Some features require external tools. For example, the default compiler backend
 relies on [latexmk](https://www.cantab.net/users/johncollins/latexmk/index.html).
@@ -45,21 +45,8 @@ Users are encouraged to read the requirements section in the
 
 ## Installation
 
-If you use [vim-plug](https://github.com/junegunn/vim-plug) or [packer.nvim](https://github.com/wbthomason/packer.nvim), then add one of the
-following lines to your `vimrc` file, correspondingly:
-
-```vim
-" vim-plug
-Plug 'lervag/vimtex'
-
-" packer.nvim
-use 'lervag/vimtex'
-```
-
-Or use some other plugin manager:
-* [vundle](https://github.com/gmarik/vundle)
-* [neobundle](https://github.com/Shougo/neobundle.vim)
-* [pathogen](https://github.com/tpope/vim-pathogen)
+There are a lot of methods for installing plugins.
+The following explains the most common and popular approaches.
 
 **Note**: Many plugin managers provide mechanisms to lazy load plugins. Please
     don't use this for VimTeX! VimTeX is already lazy loaded by virtue of being
@@ -68,7 +55,37 @@ Or use some other plugin manager:
     manager. In fact, doing it will _break_ the inverse-search mechanism, which
     relies on a _global_ command (`:VimtexInverseSearch`).
 
-If you use the new package feature in Vim, please note the following:
+### lazy.nvim
+
+In Neovim, [lazy.nvim](https://github.com/folke/lazy.nvim) is probably the most popular plugin manger.
+To install VimTeX, add a plugin spec similar to this:
+```lua
+{
+  "lervag/vimtex",
+  lazy = false,     -- we don't want to lazy load VimTeX
+  -- tag = "v2.15", -- uncomment to pin to a specific release
+  init = function()
+    -- VimTeX configuration goes here
+  end
+}
+```
+
+### vim-plug
+
+If you use [vim-plug](https://github.com/junegunn/vim-plug), then add *one* of the following lines to your configuration.
+The first will use the latest versions from the `master` branch, whereas the second will pin to a release tag.
+
+```vim
+Plug 'lervag/vimtex'
+Plug 'lervag/vimtex', { 'tag': 'v2.15' }
+```
+
+### Other
+
+There are many other plugin managers out there.
+They are typically well documented, and it should be straightforward to extrapolate the above snippets.
+
+**Note**: If you use the built-in package feature, then:
 * Make sure to read and understand the package feature: `:help package`!
 * Use the `/pack/foo/start` subdirectory to make sure the filetype plugin is
   automatically loaded for the `tex` filetypes.
@@ -89,6 +106,8 @@ After installing VimTeX, you should edit your `.vimrc` file or `init.vim` file
 to configure VimTeX to your liking. Users should read the documentation to
 learn the various configuration possibilities, but the below is a simple
 overview of some of the main aspects.
+
+**PLEASE don't just copy this without reading the comments!**
 
 ```vim
 " This is necessary for VimTeX to load properly. The "indent" is optional.
@@ -138,12 +157,12 @@ https://user-images.githubusercontent.com/66584581/119213849-1b7d4080-ba77-11eb-
 
 ### Tutorial
 
-Both new and experienced users are also encouraged to read the third-party
-article [Getting started with the VimTeX
-plugin](https://www.ejmastnak.com/tutorials/vim-latex/vimtex.html). The
-article covers VimTeX's core features and contains plenty of examples and
-high-resolution animations intended to help new users ease into working with
-the plugin.
+Both new and experienced users are encouraged to read the excellent guide by
+@ejmastnak: [Getting started with the VimTeX plugin](https://ejmastnak.com/tutorials/vim-latex/vimtex/).
+The guide covers all the fundamentals of setting up a VimTeX-based LaTeX
+workflow, including usage of the VimTeX plugin, compilation, setting up forward
+and inverse search with a PDF reader, and Vimscript tools for user-specific
+customization.
 
 ### Documentation
 
@@ -238,6 +257,7 @@ by default and must be manually enabled.
   - Toggle inline and displaymath with `ts$`
   - Toggle between e.g. `()` and `\left(\right)` with `tsd`
   - Toggle (inline) fractions with `tsf`
+  - Toggle line-break macro `\\` with `tsb`
   - Close the current environment/delimiter in insert mode with `]]`
   - Add `\left ... \right)` modifiers to surrounding delimiters with `<F8>`
   - Insert new command with `<F7>`
@@ -330,16 +350,3 @@ plugins for Vim, see:
 * [What are the differences between LaTeX plugins](http://vi.stackexchange.com/questions/2047/what-are-the-differences-between-latex-plugins)
 * [List of LaTeX editors (not only Vim)](https://tex.stackexchange.com/questions/339/latex-editors-ides)
 
-## VimTeX on the Web
-
-VimTeX users may be interested in reading
-[@ejmastnak](https://github.com/ejmastnak)'s series on [Efficient LaTeX Using
-(Neo)Vim](https://www.ejmastnak.com/tutorials/vim-latex/intro.html), which
-covers all the fundamentals of setting up a VimTeX-based LaTeX workflow,
-including usage of the VimTeX plugin, compilation, setting up forward and
-inverse search with a PDF reader, and Vimscript tools for user-specific
-customization.
-
-If you know of (or create) other up-to-date, high-quality guides to VimTeX's
-features on third-party websites, feel free to submit a pull request updating
-this section.

@@ -197,6 +197,7 @@ FEATURE OVERVIEW                                              *vimtex-features*
   - Toggle inline and displaymath with `ts$`
   - Toggle between e.g. `()` and `\left(\right)` with `tsd`/`tsD`
   - Toggle (inline) fractions with `tsf`
+  - Toggle line-break macro `\\` with `tsb`
   - Close the current environment/delimiter in insert mode with `]]`
   - Add `\left ... \right)` modifiers to surrounding delimiters with `<F8>`
   - Insert new command with `<F7>`
@@ -221,12 +222,12 @@ of its key features. Windows users should also read |vimtex-faq-windows|.
 
 Vim version ~
                                                          *vimtex_version_check*
-  VimTeX requires Vim version 8.0.1453 or neovim version 0.4.3.  It will not
+  VimTeX requires Vim version 8.2.3995 or neovim version 0.9.5. It will not
   load for older versions, unless one adds >vim
 
     let g:vimtex_version_check = 0
 <
-  to one's `vimrc` file.  This might work, but issues due to older versions
+  to one's `vimrc` file. This might work, but issues due to older versions
   than the mentioned here will be ignored.
 
 Vim configuration ~
@@ -295,9 +296,9 @@ Clientserver ~
   aware of some differences from regular Vim and should therefore read
   |macvim-clientserver| carefully.
 
-  Since Vim version 8.0.475, one can use |remote_startserver()| to start
-  a server from your `vimrc` file. The following vimrc configuration snippet
-  will ensure that Vim starts with a server, if possible: >vim
+  You can use |remote_startserver()| to start a server from your `vimrc` file.
+  The following vimrc configuration snippet will ensure that Vim starts with
+  a server, if possible: >vim
 
     if empty(v:servername) && exists('*remote_startserver')
       call remote_startserver('VIM')
@@ -870,6 +871,7 @@ This feature is explained in more detail later, see |vimtex-imaps|.
    tsc              |<plug>(vimtex-cmd-toggle-star)|                `n`
    tse              |<plug>(vimtex-env-toggle-star)|                `n`
    ts$              |<plug>(vimtex-env-toggle-math)|                `n`
+   tsb              |<plug>(vimtex-env-toggle-break)|               `n`
    <F6>             |<plug>(vimtex-env-surround-line)|              `n`
                     |<plug>(vimtex-env-surround-operator)|          `n`
    <F6>             |<plug>(vimtex-env-surround-visual)|            `x`
@@ -1041,10 +1043,20 @@ OPTIONS                                                        *vimtex-options*
 
     The value of this option should be either:
       1) a string that represents a path, or
-      2) a |Funcref|. The |Funcref| type makes it possible to specify
-         a dynamic `aux_dir`. It may be easier to understand from an example: >vim
+      2) a |Funcref| with a single dictionary argument "file_info": >
 
-           let g:vimtex_compiler_latexmk = {'aux_dir': {-> expand("%:t:r")}}
+           file_info = {
+             root = …
+             target = …
+             target_basename = …
+             target_name = …
+             jobname = …
+           }
+<
+         This makes it possible to specify a dynamic `aux_dir`. It may be
+         easier to understand from an example: >vim
+
+           let g:vimtex_compiler_latexmk = {'aux_dir': {_ -> expand("%:t:r")}}
 <
          With the above setting, the `aux_dir` is set to the base name of the
          current file. E.g., If you do `vim test.tex`, the value becomes
@@ -1065,16 +1077,8 @@ OPTIONS                                                        *vimtex-options*
     corresponds to the `$out_dir` option in `latexmk`. If the path is
     a relative path, then it is considered relative to the main project file.
 
-    The value of this option should be either:
-      1) a string that represents a path, or
-      2) a |Funcref|. The |Funcref| type makes it possible to specify
-         a dynamic `out_dir`. It may be easier to understand from an example: >vim
-
-           let g:vimtex_compiler_latexmk = {'out_dir': {-> expand("%:t:r")}}
-<
-         With the above setting, the `out_dir` is set to the base name of the
-         current file. E.g., If you do `vim test.tex`, the value becomes
-         `test`.
+    The value is either a string or a |Funcref|, similar to the above
+    described `aux_dir` key.
 
     The specified output directory is created if it does not exist.
 
@@ -3738,6 +3742,10 @@ MAP DEFINITIONS                                               *vimtex-mappings*
 <
   One may change the toggle sequence with |g:vimtex_env_toggle_math_map|.
 
+*<plug>(vimtex-cmd-toggle-break)*
+  Toggle the line-break macro `\\` at the end of current line. This may
+  be convenient when working with array and math environments.
+
 *<plug>(vimtex-env-surround-line)*
 *<plug>(vimtex-env-surround-operator)*
 *<plug>(vimtex-env-surround-visual)*
@@ -4045,13 +4053,13 @@ further customization.
     file or project.  For example, `b:vimtex.tex` identifies the tex file being
     wiped, or the main tex file of a multi-file project.
 
-    Note: Commands such as |:VimtexClean| cannot be used in this autocommand
-    because when quitting vim the current buffer does not necessarily have
-    filetype "tex".
+    Note: Commands such as |:VimtexClean| does not always work as expected
+          with this event. This is because, when quitting vim, the current
+          buffer does not necessarily have filetype "tex".
 
   *VimtexEventInitPre*
-  *VimtexEventInitPost*
-    This event is triggered at the start/end of VimTeX initialization.  The
+*VimtexEventInitPost*
+    These events are triggered at the start/end of VimTeX initialization.  The
     post event may e.g. be used to automatically start compiling a document.
 
   *VimtexEventCompileStarted*
@@ -4065,7 +4073,7 @@ further customization.
     compilation. This is only supported by |vimtex-compiler-latexmk|.
 
   *VimtexEventCompileSuccess*
-  *VimtexEventCompileFailed*
+*VimtexEventCompileFailed*
     These events are triggered after successful/failed compilation and
     allows users to add custom callback functionality.
 
@@ -4086,7 +4094,7 @@ further customization.
     function, which can be used as the callback function for reverse goto from
     a PDF viewer.
 
-Examples: >vim
+Examples (Vimscript) - see below for a Lua example: >vim
 
   " Compile on initialization, cleanup on quit
   augroup vimtex_event_1
@@ -4131,6 +4139,17 @@ Examples: >vim
     au!
     au User VimtexEventViewReverse normal! zMzvzz
   augroup END
+
+Examples - Lua: >lua
+
+  local au_group = vim.api.nvim_create_augroup("vimtex_events", {}),
+
+  -- Cleanup on quit
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "VimtexEventQuit",
+    group = au_group,
+    command = "VimtexClean"
+  })
 
 ------------------------------------------------------------------------------
 TEXT OBJECTS                                              *vimtex-text-objects*
@@ -4621,7 +4640,7 @@ benefits compared to the more general `cmp-omni`:
   bibliographic details, useful for citations).
 * Parses and display all details contained in bibtex files for cite
   completions.
-* Trims long strings in the completion menu (to add space for the documenation
+* Trims long strings in the completion menu (to add space for the documentation
   window).
 * Triggers the completion menu automatically after typing `\cite{`.
 * Allows more granular configuration of the menus, and more.
@@ -4920,7 +4939,7 @@ of the math mode regions.
 
 VimTeX's syntax script is implemented to support these basic structures as
 well as a large set of more specific commands and elements. The more specific
-rules define groups whose names are are more specific, and it is usually
+rules define groups whose names are more specific, and it is usually
 possible to define custom highlighting of specific commands and argument
 groups.
 
@@ -5246,7 +5265,7 @@ DENITE AND UNITE SOURCES                                        *vimtex-denite*
 
                                         https://github.com/Shougo/denite.nvim
                                           https://github.com/Shougo/unite.vim
-|denite.nvim| is is a popular interface for many things, including outlines.
+|denite.nvim| is a popular interface for many things, including outlines.
 Although VimTeX includes a simple interface for a tables of contents, it also
 makes sense to provide these as a source to |denite.nvim|. The source name is
 simply `vimtex`.
@@ -6221,7 +6240,25 @@ API REFERENCE                                                 *vimtex-code-api*
 This is an API reference of the most useful VimTeX functions available to
 users for customization.
 
-Note: This API is currently a work in progress!
+Note: This reference is currently a work in progress!
+
+*vimtex#cite#get_entry*
+  Returns a citation entry. It takes an option `key` argument. If a `key` is
+  supplied, then the corresponding bib entry for that key is returned (a
+  |Dict|). Else it returns the entry for the key under the cursor. If no key
+  is found, an empty |Dict| is returned.
+
+*vimtex#cite#get_key*
+  Returns the citation key under the cursor. Can be useful e.g. to create
+  a function to open a citation in another progrem such as BibDesk or Zotero.
+  For example: >vim
+
+    function! OpenInBibDesk() abort
+      let l:key = vimtex#cite#get_key()
+      if empty(l:key) | return | endif
+
+      call vimtex#util#www('x-bdsk://' .. vimtex#util#url_encode(l:key))
+    endfunction
 
 *vimtex#compiler#callback*
   Utility function to be used as a compiler callback function. Takes a single
@@ -6234,16 +6271,6 @@ Note: This API is currently a work in progress!
   The function does several useful things based on the status, such as running
   the |VimtexEventCompiling|, |VimtexEventCompileFailed| and
   |VimtexEventCompileSuccess| events.
-
-*vimtex#syntax#in_mathzone*
-  Returns 1 if the position is inside a math zone. If called without
-  arguments, the position refers to the cursor position. Else must be called
-  with two arguments: the line number and column number.
-
-*vimtex#view#inverse_search*
-  Utility function for reverse search from pdf viewer. Takes two arguments:
-  the line number and a filename. The function runs the event
-  |VimtexEventViewReverse| at the end, which allows more user customization.
 
 *vimtex#env#get_inner*
 *vimtex#env#get_outer*
@@ -6264,6 +6291,24 @@ Note: This API is currently a work in progress!
   the environment name that was passed as the only mandatory argument. That
   is, the return value is a list of two numbers: The line number and the
   column number. These are both 0 if no surrounding environment was found.
+
+*vimtex#syntax#in*
+    `vimtex#syntax#in(name)` -> |Boolean|
+    `vimtex#syntax#in(name, line, column)` -> |Boolean|
+  Returns |v:true| if the cursor position or the specified position is inside
+  the `name`d group. `name` is a regex that is used to matched against the
+  syntax group stack.
+
+*vimtex#syntax#in_mathzone*
+    `vimtex#syntax#in_mathzone()` -> |Boolean|
+    `vimtex#syntax#in_mathzone(line, column)` -> |Boolean|
+  Returns |v:true| if the cursor position or the specified position is inside
+  a math zone.
+
+*vimtex#view#inverse_search*
+  Utility function for reverse search from pdf viewer. Takes two arguments:
+  the line number and a filename. The function runs the event
+  |VimtexEventViewReverse| at the end, which allows more user customization.
 
 ==============================================================================
 FAQ                                                                *vimtex-faq*
@@ -6552,7 +6597,9 @@ A: Yes, it should work.  The following recipe has been reported to work [0],
 
    4. Run `brew services start dbus`, and use `brew services info dbus` to
       double-check that `dbus` is running. Apple Silicon users that encounter
-      problems at this step should try the recipe in [3].
+      problems at this step should try the recipe in [3]. Also, if the user
+      encounter problems with running `dbus` with `brew services start`, they
+      could try to start it manually as explained in [4].
 
    5. Now install Zathura (most recent version, aka HEAD): >
 
@@ -6573,6 +6620,7 @@ A: Yes, it should work.  The following recipe has been reported to work [0],
    [1]: https://brew.sh
    [2]: https://github.com/lervag/vimtex/issues/2391#issuecomment-1127678531
    [3]: https://github.com/zegervdv/homebrew-zathura/issues/99
+   [4]: https://github.com/lervag/vimtex/issues/2889#issuecomment-1974827512
 
 ------------------------------------------------------------------------------
                                                *vimtex-faq-zathura-windows-wsl*

@@ -280,7 +280,8 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
   call vimtex#syntax#core#new_arg('texPartArgTitle')
 
   " Item elements in lists
-  syntax match texCmdItem "\\item\>"
+  syntax match texCmdItem "\\item\>" nextgroup=texItemLabel
+  call vimtex#syntax#core#new_opt('texItemLabel')
 
   " \begin \end environments
   syntax match texCmdEnv "\v\\%(begin|end)>" nextgroup=texEnvArgName
@@ -860,6 +861,8 @@ function! vimtex#syntax#core#init_highlights() abort " {{{1
   highlight def link texFilesArg           texFileArg
   highlight def link texFilesOpt           texFileOpt
   highlight def link texGroupError         texError
+  highlight def link texItemLabel          texOpt
+  highlight def link texItemLabelConcealed texItemLabel
   highlight def link texLetArgEqual        texSymbol
   highlight def link texLetArgName         texArgNew
   highlight def link texLigature           texSymbol
@@ -1396,16 +1399,20 @@ endfunction
 
 let s:re_sub =
       \ '[-+=()0-9aehijklmnoprstuvx]\|\\\%('
-      \ . join([
-      \     'beta', 'rho', 'phi', 'gamma', 'chi'
+      \ .. join([
+      \     'beta', 'gamma', 'rho', 'phi', 'chi'
       \ ], '\|') . '\)\>'
-let s:re_super = '[-+=()<>:;0-9a-pr-zABDEG-PRTUVW]'
+let s:re_super =
+      \ '[-+=()<>:;0-9a-qr-zA-FG-QRTUVW]\|\\\%('
+      \ .. join([
+      \     'beta', 'gamma', 'delta', 'epsilon', 'theta', 'iota', 'phi', 'chi'
+      \ ], '\|') . '\)\>'
 
 let s:map_sub = [
       \ ['\\beta\>',  'ᵦ'],
-      \ ['\\rho\>', 'ᵨ'],
-      \ ['\\phi\>',   'ᵩ'],
       \ ['\\gamma\>', 'ᵧ'],
+      \ ['\\rho\>',   'ᵨ'],
+      \ ['\\phi\>',   'ᵩ'],
       \ ['\\chi\>',   'ᵪ'],
       \ ['(',         '₍'],
       \ [')',         '₎'],
@@ -1442,6 +1449,14 @@ let s:map_sub = [
       \]
 
 let s:map_super = [
+      \ ['\\beta\>',    'ᵝ'],
+      \ ['\\gamma\>',   'ᵞ'],
+      \ ['\\delta\>',   'ᵟ'],
+      \ ['\\epsilon\>', 'ᵋ'],
+      \ ['\\theta\>',   'ᶿ'],
+      \ ['\\iota\>',    'ᶥ'],
+      \ ['\\phi\>',     'ᵠ'],
+      \ ['\\chi\>',     'ᵡ'],
       \ ['(',  '⁽'],
       \ [')',  '⁾'],
       \ ['+',  '⁺'],
@@ -1477,6 +1492,7 @@ let s:map_super = [
       \ ['n',  'ⁿ'],
       \ ['o',  'ᵒ'],
       \ ['p',  'ᵖ'],
+      \ ['q',  '𐞥'],
       \ ['r',  'ʳ'],
       \ ['s',  'ˢ'],
       \ ['t',  'ᵗ'],
@@ -1488,8 +1504,10 @@ let s:map_super = [
       \ ['z',  'ᶻ'],
       \ ['A',  'ᴬ'],
       \ ['B',  'ᴮ'],
+      \ ['C',  'ꟲ'],
       \ ['D',  'ᴰ'],
       \ ['E',  'ᴱ'],
+      \ ['F',  'ꟳ'],
       \ ['G',  'ᴳ'],
       \ ['H',  'ᴴ'],
       \ ['I',  'ᴵ'],
@@ -1500,6 +1518,7 @@ let s:map_super = [
       \ ['N',  'ᴺ'],
       \ ['O',  'ᴼ'],
       \ ['P',  'ᴾ'],
+      \ ['Q',  'ꟴ'],
       \ ['R',  'ᴿ'],
       \ ['T',  'ᵀ'],
       \ ['U',  'ᵁ'],
@@ -1650,7 +1669,7 @@ let s:cmd_symbols = [
       \ ['rmoustache', '╮'],
       \ ['S', '§'],
       \ ['searrow', '↘'],
-      \ ['setminus', '⧵'],
+      \ ['setminus', '∖'],
       \ ['sharp', '♯'],
       \ ['sim', '∼'],
       \ ['simeq', '⋍'],
@@ -2170,8 +2189,14 @@ function! s:match_conceal_fancy() abort " {{{1
   syntax match texCmd         '\\dots\>'  conceal cchar=…
   syntax match texCmd         '\\slash\>' conceal cchar=/
   syntax match texCmd         '\\ldots\>' conceal cchar=…
-  syntax match texCmdItem     '\\item\>'  conceal cchar=○
   syntax match texTabularChar '\\\\'      conceal cchar=⏎
+
+  syntax match texCmdItem     '\\item\>'  conceal cchar=○
+        \ nextgroup=texItemLabelConcealed
+  syntax match texItemLabelConcealed "\s*\[[^]]*\]"
+        \ contained contains=texItemLabelDelim
+  syntax match texItemLabelDelim "\]"    contained conceal
+  syntax match texItemLabelDelim "\s*\[" contained conceal cchar= 
 endfunction
 
 " }}}1
@@ -2208,7 +2233,7 @@ function! s:match_conceal_spacing() abort " {{{1
 
   call vimtex#syntax#core#new_arg('texConcealedArg', {
         \ 'opts': 'contained conceal',
-        \ 'contains': 'texConcealedArgGroup',
+        \ 'contains': 'texSpecialChar,texConcealedArgGroup',
         \})
   call vimtex#syntax#core#new_arg('texConcealedArgGroup', {
         \ 'matchgroup': 'matchgroup=NONE',
