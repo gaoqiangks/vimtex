@@ -160,6 +160,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
         let l:end_with_dot=1
     endif
     let l:line = substitute(getline(a:close.lnum - 1), '\.\s*$', a:new[1], '')
+    echo "lline1" l:line
     if l:end_with_dot == 1
         let l:line=l:line."."
     endif
@@ -174,6 +175,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
         let l:end_with_dot=1
     endif
     let l:line = substitute(getline(a:close.lnum - 1), '\.\s*$', a:new[1], '')
+    echo "lline2" l:line
     if l:end_with_dot == 1
         let l:line=l:line."."
     endif
@@ -184,6 +186,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
     " echo "curr3" getline(a:close.lnum-1)
     " let l:line = substitute(l:before, '\s*$', a:new[1], '') . l:after
     let l:line = substitute(l:before, '\s*\(\.\)\s*$', a:new[1].'\1', '') . l:after
+    echo "lline3" l:line
     call setline(a:close.lnum, l:line)
   endif
 
