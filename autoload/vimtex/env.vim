@@ -154,6 +154,7 @@ endfunction
 function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
   let [l:before, l:after] = s:get_line_split(a:close)
   let l:end_with_dot = -1
+  "l:before l:after  当前行中, 环境前后的内容
   if l:before . l:after =~# '^\s*$'
     let l:curr_line = getline(a:close.lnum-1)
     if l:curr_line =~# '\.\s*$'
