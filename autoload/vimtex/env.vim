@@ -154,17 +154,21 @@ endfunction
 function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
   let [l:before, l:after] = s:get_line_split(a:close)
   let l:end_with_dot = -1
+  let l:dot = ""
   "l:before l:after  当前行中, 环境前后的内容
   if l:before . l:after =~# '^\s*$'
     let l:curr_line = getline(a:close.lnum-1)
-    if l:curr_line =~# '\.\s*$'
+	let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
+    if l:dot == ""
+        let l:end_with_dot=0
+	else
         let l:end_with_dot=1
     endif
-    let l:line = substitute(getline(a:close.lnum - 1), '\.\s*$', a:new[1], '')
+    let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
     " echo "lline1" l:line
     if l:end_with_dot == 1
-        let l:line = substitute(getline(a:close.lnum - 1), '\.\s*$', a:new[1], '')
-        let l:line=l:line."."
+        let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
+        let l:line=l:line.l:dot
     else
         let l:line = substitute(getline(a:close.lnum - 1), '\s*$', a:new[1], '')
     endif
@@ -175,13 +179,18 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
     endif
   elseif l:before =~# '^\s*$'
     let l:curr_line = getline(a:close.lnum-1)
-    if l:curr_line =~# '\.\s*$'
+
+	let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$))
+    if l:dot == ""
+        let l:end_with_dot=0
+	else
         let l:end_with_dot=1
     endif
-    let l:line = substitute(getline(a:close.lnum - 1), '\.\s*$', a:new[1], '')
+
+    let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
     " echo "lline2" l:line
     if l:end_with_dot == 1
-        let l:line=l:line."."
+        let l:line=l:line.l:dot
     endif
     let l:line .= substitute(l:after, '^\s*', ' ', '')
     call setline(a:close.lnum - 1, l:line)
@@ -189,7 +198,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
   else
     " echo "curr3" getline(a:close.lnum-1)
     " let l:line = substitute(l:before, '\s*$', a:new[1], '') . l:after
-    let l:line = substitute(l:before, '\s*\(\.\)\s*$', a:new[1].'\1', '') . l:after
+    let l:line = substitute(l:before, '\s*\([.,]\)\s*$', a:new[1].'\1', '') . l:after
     " echo "lline3" l:line
     call setline(a:close.lnum, l:line)
   endif
@@ -245,14 +254,15 @@ function! vimtex#env#change_to_indented(open, close, new) abort " {{{1
   if !empty(l:after)
     let l:after_firstcn = match(l:after, '\S')
     let l:after_firstc = l:after[l:after_firstcn]
-    if l:after_firstc == "."
-        let l:after=substitute(l:after, '\s*\.', '', '')
+	" let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
+    if l:after_firstc == "." || l:after_firstc == ","
+        let l:after=substitute(l:after, '\s*'.l:after_firstc, '', '')
     endif
   endif
 
   if !empty(l:before)
-    if l:after_firstc == "."
-        let l:before = l:before."."
+    if l:after_firstc == "." || l:after_firstc == ","
+        let l:before = l:before.l:after_firstc
     endif
     call setline(a:close.lnum, l:before)
     call append(a:close.lnum, a:new[1])
@@ -262,8 +272,11 @@ function! vimtex#env#change_to_indented(open, close, new) abort " {{{1
   if !empty(l:after)
     let l:after_firstcn = match(l:after, '\S')
     let l:after_firstc = l:after[l:after_firstcn]
-    if l:after_firstc == "."
+    " if l:after_firstc == "."
+    if l:after_firstc == "." 
         let l:after=substitute(l:after, '\s*\.*', '', '')
+	elseif  l:after_firstc == ","
+        let l:after=substitute(l:after, '\s*\,*', '', '')
     endif
     call append(a:close.lnum + !empty(l:before), l:after)
     let l:nlines += 1
