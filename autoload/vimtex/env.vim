@@ -141,7 +141,7 @@ function! vimtex#env#change(open, close, new) abort " {{{1
         \}, a:new, ['\begin{' . a:new . '}', '\end{' . a:new . '}'])
 
   " execute printf("l:new is: ".l:new)
-^"echo l:new
+"echo l:new
   if index(['$', '\('], a:new) >= 0
     return vimtex#env#change_to_inline_math(a:open, a:close, l:new)
   endif
@@ -165,7 +165,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
         let l:end_with_dot=1
     endif
     let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
-^"echo "lline1" l:line
+"echo "lline1" l:line
     if l:end_with_dot == 1
         let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
         let l:line=l:line.l:dot
@@ -188,7 +188,7 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
     endif
 
     let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
-^"echo "lline2" l:line
+"echo "lline2" l:line
     if l:end_with_dot == 1
         let l:line=l:line.l:dot
     endif
@@ -196,10 +196,10 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort " {{{1
     call setline(a:close.lnum - 1, l:line)
     execute a:close.lnum . 'delete _'
   else
-^"echo "curr3" getline(a:close.lnum-1)
+"echo "curr3" getline(a:close.lnum-1)
     " let l:line = substitute(l:before, '\s*$', a:new[1], '') . l:after
     let l:line = substitute(l:before, '\s*\([.,]\)\s*$', a:new[1].'\1', '') . l:after
-^"echo "lline3" l:line
+"echo "lline3" l:line
     call setline(a:close.lnum, l:line)
   endif
 
@@ -245,7 +245,7 @@ function! vimtex#env#change_to_indented(open, close, new) abort " {{{1
 
   let [l:before, l:after] = s:get_line_split(a:close)
 
-^"echo "---l:before" l:before
+"echo "---l:before" l:before
   let l:before = substitute(l:before, '\s*$', '', '')
   let l:after = substitute(l:after, '^\s*', '', '')
   let l:after_firstcn = -1
@@ -285,9 +285,9 @@ function! vimtex#env#change_to_indented(open, close, new) abort " {{{1
   let [l:before, l:after] = s:get_line_split(a:open)
   let l:before = substitute(l:before, '\s*$', '', '')
   let l:after = substitute(l:after, '^\s*', '', '')
-^"echo "l:before"
-^"echo l:before
-^"echo "a:new" a:new[0]
+"echo "l:before"
+"echo l:before
+"echo "a:new" a:new[0]
   if !empty(l:before)
     call setline(a:open.lnum, l:before)
     call append(a:open.lnum, a:new[0])
@@ -500,7 +500,7 @@ function! s:change_prompt(type) abort " {{{1
   if g:vimtex_env_change_autofill
     let l:name = get(l:open, 'name', l:open.match)
     let s:env_name = l:name
-^"echo l:name
+"echo l:name
     let l:ret=vimtex#ui#input({
           \ 'prompt': '<'.l:name.'> is changed to:',
           \ 'default': l:name,
