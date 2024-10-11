@@ -465,76 +465,13 @@ function! s:operator_setup(operator, type) abort " {{{1
     let l:new_env = s:change_prompt(s:operator_type)
 	let g:new_env = l:new_env
 	lua<<EOF
+	local env = require("lib/env")
 	local env_input = vim.api.nvim_eval("g:new_env")
-	local env_map = {
-		["eq"] = "equation",
-		["th"] = "theorem",
-		["pr"] = "proposition",
-		["le"] = "lemma",
-		["re"] = "remark",
-		["co"] = "corollary",
-		["ex"] = "exercise",
-		["em"] = "example",
-		["de"] = "definition",
-		["sp"] = "split",
-		["qu"] = "question",
-	}
-	local env = {
-		["equation"] = 1,
-		["theorem"] = 1,
-		["proposition"] = 1,
-		["lemma"] = 1,
-		["remark"] = 1,
-		["corollary"] = 1,
-		["exercise"] = 1,
-		["example"] = 1,
-		["definition"] = 1,
-		["split"] = 1,
-		["problem"] = 1,
-		["question"] = 1,
-	}
-	local final_env = nil
-	local no_n = 0
-	if env_input == nil then
-		return
-		end
-		--有时候不小心将equation输成\equation, 所以先去掉"\"
-		env_input = string.gsub(env_input, "\\", "")
-		local first_letter = string.sub(env_input, 1, 1)
-		if first_letter == "*" then
-			no_n = 1
-			env_input = string.sub(env_input, 2, #env_input)
-			end
-			--local s=env[env_input]
-			--if s then
-			--final_env=env_input
-			--else
-			--local first_two_letters=string.sub(env_input,1,2)
-			--if first_two_letters then
-			--final_env=env_map[first_two_letters]
-			--else
-			for k, v in pairs(env) do
-				--string.find反回两个值, 第一个值是匹配开始的地方, 第二个值是匹配结束的地方
-				ibegin, iend = string.find(k, env_input)
-				if ibegin == 1 then
-					final_env = k
-					break
-				end
-			end
-					--end
-					--end
-			if final_env then
-				if no_n == 1 then
-					final_env = final_env .. "*"
-				end
-			else
-				final_env = env_input
-			end
-			-- print("final_env: " .. final_env)
-			vim.g.new_env = final_env
-			-- vim.api.nvim_exec('let g:new_env = luaeval("final_env")', true)
+	local final_env = env.get_env(env_input)
+	--print("final_env", final_env)
+	vim.g.new_env = final_env
+	--vim.api.nvim_exec('let g:new_env = luaeval("final_env")', true)
 EOF
-	" echo "l:new".l:new.
 	let l:new_env = g:new_env
     if empty(l:new_env)
       let s:operator_abort = 1
