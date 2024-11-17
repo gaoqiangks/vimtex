@@ -1285,7 +1285,8 @@ OPTIONS                                                        *vimtex-options*
 
   command ~
     This is the command to run to start compilation. This can be any command,
-    and the command is run from the project root.
+    and the command is run from the project root. The command string will
+    substitute `@tex` with the path to the current project's main tex file.
 
   hooks ~
     Same as |g:vimtex_compiler_latexmk| / `hooks`.
@@ -2591,7 +2592,8 @@ OPTIONS                                                        *vimtex-options*
       Default: Undefined
       If this is defined, then it is used instead of `name` for matching the
       `cmdname` part. It is interpreted as a regular expression with "very
-      magic" mode activated (see |/\v|).
+      magic" mode activated (see |/\v|). For example, you need to use `>`
+      instead of `\>` for end-of-word atom (|\>|).
 
     mathmode ~
       Default: |v:false|
@@ -2661,13 +2663,14 @@ OPTIONS                                                        *vimtex-options*
 
   A couple of examples may be helpful: The first in the following list shows
   how to use bolded style on a custom vector macro such as `\vct{v}`. The
-  second example shows how to conceal `\R` with `ℝ`. The third example shows
-  how one may use the `nextgroup` key, and the fourth shows how to define
-  a command whose argument should not be spell checked. >vim
+  second example shows how to conceal `\R` with `ℝ`; notice the use of `cmdre`
+  and the end-of-word atom `>` to ensure it does not also match e.g. `\Re`.
+  The third example shows how one may use the `nextgroup` key, and the fourth
+  shows how to define a command whose argument should not be spell checked. >vim
 
     let g:vimtex_syntax_custom_cmds = [
           \ {'name': 'vct', 'mathmode': 1, 'argstyle': 'bold'},
-          \ {'name': 'R', 'mathmode': 1, 'concealchar': 'ℝ'},
+          \ {'name': 'R', 'cmdre': 'R>', 'mathmode': 1, 'concealchar': 'ℝ'},
           \ {'name': 'mathnote', 'mathmode': 1, 'nextgroup': 'texMathTextArg'},
           \ {'name': 'nospell', 'argspell': 0},
           \]
@@ -4071,7 +4074,7 @@ further customization.
           buffer does not necessarily have filetype "tex".
 
   *VimtexEventInitPre*
-*VimtexEventInitPost*
+  *VimtexEventInitPost*
     These events are triggered at the start/end of VimTeX initialization.  The
     post event may e.g. be used to automatically start compiling a document.
 
@@ -4086,7 +4089,7 @@ further customization.
     compilation. This is only supported by |vimtex-compiler-latexmk|.
 
   *VimtexEventCompileSuccess*
-*VimtexEventCompileFailed*
+  *VimtexEventCompileFailed*
     These events are triggered after successful/failed compilation and
     allows users to add custom callback functionality.
 
@@ -4111,9 +4114,9 @@ Examples (Vimscript) - see below for a Lua example: >vim
 
   " Compile on initialization, cleanup on quit
   augroup vimtex_event_1
-    au!
-    au User VimtexEventQuit     VimtexClean
-    au User VimtexEventInitPost VimtexCompile
+    autocmd!
+    autocmd User VimtexEventQuit     VimtexClean
+    autocmd User VimtexEventInitPost VimtexCompile
   augroup END
 
   " Close viewers when VimTeX buffers are closed
@@ -4126,8 +4129,8 @@ Examples (Vimscript) - see below for a Lua example: >vim
   endfunction
 
   augroup vimtex_event_2
-    au!
-    au User VimtexEventQuit call CloseViewers()
+    autocmd!
+    autocmd User VimtexEventQuit call CloseViewers()
   augroup END
 
   " Add custom mappings in ToC buffer
@@ -4137,20 +4140,42 @@ Examples (Vimscript) - see below for a Lua example: >vim
   endfunction
 
   augroup vimtex_event_3
-    au!
-    au User VimtexEventTocCreated call TocMappings()
+    autocmd!
+    autocmd User VimtexEventTocCreated call TocMappings()
   augroup END
 
   " Specify window position when opening ToC entries
   augroup vimtex_event_4
-    au!
-    au User VimtexEventTocActivated normal! zt
+    autocmd!
+    autocmd User VimtexEventTocActivated normal! zt
   augroup END
 
-  " Specify extra behaviour after reverse goto
+  function! CenterAndFlash() abort
+    " Close all folds, then open only the folds at cursor position, then
+    " center the cursor in window.
+    normal! zMzvzz
+
+    let save_cursorline_state = &cursorline
+
+    " Add simple flashing effect, see
+    " * https://vi.stackexchange.com/a/3481/29697
+    " * https://stackoverflow.com/a/33775128/38281
+    for i in range(1, 3)
+      set cursorline
+      redraw
+      sleep 200m
+      set nocursorline
+      redraw
+      sleep 200m
+    endfor
+
+    let &cursorline = save_cursorline_state
+  endfunction
+
+  " Specify additional behaviour after inverse search
   augroup vimtex_event_5
-    au!
-    au User VimtexEventViewReverse normal! zMzvzz
+    autocmd!
+    autocmd User VimtexEventViewReverse call CenterAndFlash()
   augroup END
 
   " Focus the terminal after inverse search
@@ -4789,7 +4814,7 @@ Note: The |fold-expr| method of folding is well known to be slow, e.g. for
 In order to get slightly cleaner fold text, I recommend setting the global
 'fillchars' option to a single space for folds: >vim
 
-  set fillchars=fold:\
+  set fillchars=fold:\ 
 
 Note: Remember to include the whitespace after backslash!
 
@@ -6053,15 +6078,20 @@ Configuration: >vim
   " For simple variant without xdotool
   let g:vimtex_view_method = 'zathura_simple'
 
+The main variant uses `xdotool` to help avoid duplicate Zathura instances.
+However, in some environments, `xdotool` is not available. Here the simple
+variant should work well.
+
 VimTeX will start Zathura with the `-x` argument to specify the inverse search
 options automatically. This means that, in most cases, inverse search should
 work as expected without any further configuration. One may still be
 interested in learning how inverse-search configuration works, in which case
 one should read |vimtex-synctex-inverse-search|.
 
-The main variant uses `xdotool` to help avoid duplicate Zathura instances.
-However, in some environments, `xdotool` is not available. Here the simple
-variant should work well.
+Zathura also supports `%{column}`, so if your synctex implementation supports
+getting the column, then you can put the following in your `zathurarc`: >conf
+
+  set synctex-editor-command "vim -v --not-a-term -T dumb -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""
 
 Associated settings:
 * |g:vimtex_callback_progpath|
@@ -6140,6 +6170,9 @@ To configure with `VimtexInverseSearch`, use: >bash
   vim -v --not-a-term -T dumb -c "VimtexInverseSearch %l '%f'"
 
   nvim --headless -c "VimtexInverseSearch %l '%f'"
+
+  # Or, if you also have the column number in %c
+  nvim --headless -c "VimtexInverseSearch %l:%c '%f'"
 
 On Windows, the above commands may lead to an annoying command window "popup".
 This may be avoided, or at least reduced, with the following variants: >bash
