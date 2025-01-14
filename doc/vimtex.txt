@@ -869,7 +869,8 @@ This feature is explained in more detail later, see |vimtex-imaps|.
    csd              |<plug>(vimtex-delim-change-math)|              `n`
    tsf              |<plug>(vimtex-cmd-toggle-frac)|                `nx`
    tsc              |<plug>(vimtex-cmd-toggle-star)|                `n`
-   tse              |<plug>(vimtex-env-toggle-star)|                `n`
+   tss              |<plug>(vimtex-env-toggle-star)|                `n`
+   tse              |<plug>(vimtex-env-toggle)|                     `n`
    ts$              |<plug>(vimtex-env-toggle-math)|                `n`
    tsb              |<plug>(vimtex-env-toggle-break)|               `n`
    <F6>             |<plug>(vimtex-env-surround-line)|              `n`
@@ -1682,7 +1683,7 @@ OPTIONS                                                        *vimtex-options*
 
     `'vimtex#doc#handler#texdoc'`  Open documentation with local `texdoc`.
     Fallback                     Open documentation online through
-                                 http://texdoc.net/pkg/packagename.
+                                 http://texdoc.org/pkg/packagename.
 
   To use the local `texdoc`, set: >vim
 
@@ -1755,6 +1756,17 @@ OPTIONS                                                        *vimtex-options*
         `<c-u>`).
 
   Default: 0
+
+*g:vimtex_env_toggle_map*
+  Specify the toggle map for |<plug>(vimtex-env-toggle)|. You can use this to
+  change the desired toggle sequence.
+
+  Default value: >vim
+
+    let g:vimtex_env_toggle_map = {
+          \ 'itemize': 'enumerate',
+          \ 'enumerate': 'itemize',
+          \}
 
 *g:vimtex_env_toggle_math_map*
   Specify toggle map for |<plug>(vimtex-env-toggle-math)|. You can use this to
@@ -3490,6 +3502,13 @@ OPTIONS                                                        *vimtex-options*
 
   Default value: 1
 
+*g:vimtex_view_zathura_use_synctex*
+  Set to 0 or |v:false| to disable synctex for the Zathura viewer. This can be
+  useful e.g. for MacOS users who struggle with getting synctex to work
+  properly (see |vimtex-faq-zathura-macos|).
+
+  Default value: 1
+
 *g:vimtex_callback_progpath*
   The path to the Vim/neovim executable. This is currently passed to Zathura
   and Sioyek for use with synctex callbacks; see |vimtex-view-zathura| and
@@ -3778,6 +3797,10 @@ MAP DEFINITIONS                                               *vimtex-mappings*
   a `\frac{}{}` command or a `numerator / denominator` string. In normal mode,
   we try to detect the surrounding fraction command or inline fraction
   expression. If successful, the detected fraction is toggled.
+
+*<plug>(vimtex-env-toggle)*
+  Toggle environment, e.g. between `enumerate` and `itemize`. The toggle
+  sequence/map can be customized with |g:vimtex_env_toggle_map|.
 
 *<plug>(vimtex-cmd-toggle-star)*
 *<plug>(vimtex-env-toggle-star)*
@@ -5519,7 +5542,7 @@ LATEXRUN                                             *vimtex-compiler-latexrun*
 
                                         https://github.com/aclements/latexrun
 > See LaTeX run. Run latexrun.
-> 
+>
 > latexrun fits LaTeX into a modern build environment. It hides LaTeX's
 > circular dependencies, surfaces errors in a standard and user-friendly
 > format, and generally enables other tools to do what they do best.
@@ -6130,6 +6153,7 @@ getting the column, then you can put the following in your `zathurarc`: >conf
 Associated settings:
 * |g:vimtex_callback_progpath|
 * |g:vimtex_view_zathura_check_libsynctex|
+* |g:vimtex_view_zathura_use_synctex|
 * |g:vimtex_view_zathura_options|
 
 Note: The interpolation variables for Zathura configuration of inverse search
@@ -6236,7 +6260,7 @@ VimTeX provides the command |:VimtexDocPackage| to open documentation for
 packages and documentclasses. The command is mapped to `K` by default.
 
 For simplicity, the standard method provided by VimTeX is to look up
-documentation online through http://texdoc.net/. However, this can be
+documentation online through http://texdoc.org/. However, this can be
 customized with the option |g:vimtex_doc_handlers|. The option allows much
 flexibility for advanced users. For users that want to use a local `texdoc`
 installation as the main method, they may use the following config: >vim
@@ -6697,10 +6721,15 @@ A: SumatraPDF expects all path arguments to be in the regular Windows format,
 ------------------------------------------------------------------------------
                                                      *vimtex-faq-zathura-macos*
 Q: Does Zathura + VimTeX work on macOS?
-A: Yes, it should work.  The following recipe has been reported to work [0],
-   although users with Apple Silicon CPUs have reported difficulties starting
-   `dbus`. These users may want to try the more involved recipe given in [3]
-   if the below procedure fails.
+A: Yes, it works. It is recommended to use the `'zathura_simple'` variant.
+   Running Zathura without synctex support should "just work". To do so, set
+   the |g:vimtex_view_zathura_use_synctex| to 0.
+
+   To have synctex support, one needs to have `dbus` working properly. This
+   seems to be quite hard, but the following recipe has been reported to work
+   for some people [0]. However, users with Apple Silicon CPUs have reported
+   difficulties starting `dbus`. These users may want to try the more involved
+   recipe given in [3] if the below procedure fails.
 
    The steps assume the user has installed and knows how to use Homebrew [1].
 

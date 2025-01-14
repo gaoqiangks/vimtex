@@ -74,6 +74,10 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_echo_verbose_input', 1)
 
   call s:init_option('vimtex_env_change_autofill', 0)
+  call s:init_option('vimtex_env_toggle_map', {
+        \ 'itemize': 'enumerate',
+        \ 'enumerate': 'itemize',
+        \})
   call s:init_option('vimtex_env_toggle_math_map', {
         \ '$': '\[',
         \ '\[': 'equation',
@@ -511,6 +515,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_view_texshop_sync', 0)
   call s:init_option('vimtex_view_zathura_options', '')
   call s:init_option('vimtex_view_zathura_check_libsynctex', 1)
+  call s:init_option('vimtex_view_zathura_use_synctex', 1)
 
   " Fallback option
   if g:vimtex_context_pdf_viewer ==# 'NONE'
