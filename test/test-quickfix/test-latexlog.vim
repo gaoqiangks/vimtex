@@ -13,6 +13,7 @@ endtry
 
 let s:expected_list = [
       \ {'lnum': 0,   'type': 'E', 'text': "Runaway argument?\n{\\sqrt {{1}} \\end {equation} \\par \\end {document} \nFile ended while scanning use of \\frac ."},
+      \ {'lnum': 0,   'type': 'E', 'text': "Emergency stop (fatal error)!"},
       \ {'lnum': 0,   'type': 'E', 'text': 'Runaway argument?'},
       \ {'lnum': 16,  'type': 'E', 'text': 'Paragraph ended before \date  was complete.'},
       \ {'lnum': 11,  'type': 'E', 'text': "Undefined control sequence.\n\\cdashline"},
@@ -33,6 +34,8 @@ let s:expected_list = [
       \ {'lnum': 0,   'type': 'W', 'text': "Overfull \\vbox (303.66812pt too high) has occurred while \\output is active []"},
       \ {'lnum': 0,   'type': 'W', 'text': 'Missing character: There is no ^^A (U+0001) in font [lmroman10-regular]:+tlig;!'},
       \ {'lnum': 4,   'type': 'W', 'text': 'Class memoir Warning: As of 2018, \fixpdflayout\ is no longer used'},
+      \ {'lnum': 5,   'type': 'W', 'text': "LaTeX Font Warning: Font shape `OT1/cmr/bx/n' in size <8.43146> not available\nsize <8> substituted"},
+      \ {'lnum': 6,   'type': 'W', 'text': "LaTeX Warning: No positions in optional float specifier.\nDefault added (so using `tbp')"},
       \]
 let s:qf = getqflist()
 call assert_equal(
