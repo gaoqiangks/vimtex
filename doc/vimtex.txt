@@ -193,7 +193,8 @@ FEATURE OVERVIEW                                              *vimtex-features*
     `dsc`/`dse`/`ds$`/`dsd`
   - Change the surrounding command, environment or delimiter with
     `csc`/`cse`/`cs$`/`csd`
-  - Toggle starred command or environment with `tsc`/`tse`
+  - Toggle between complementary environments with `tse`
+  - Toggle starred command or environment with `tsc`/`tss`
   - Toggle inline and displaymath with `ts$`
   - Toggle between e.g. `()` and `\left(\right)` with `tsd`/`tsD`
   - Toggle (inline) fractions with `tsf`
@@ -910,10 +911,10 @@ This feature is explained in more detail later, see |vimtex-imaps|.
    ]R               |<plug>(vimtex-]R)|                             `nxo`
    [r               |<plug>(vimtex-[r)|                             `nxo`
    [R               |<plug>(vimtex-[R)|                             `nxo`
-   ]/               |<plug>(vimtex-]/|                              `nxo`
-   ]*               |<plug>(vimtex-]star|                           `nxo`
-   [/               |<plug>(vimtex-[/|                              `nxo`
-   [*               |<plug>(vimtex-[star|                           `nxo`
+   ]/               |<plug>(vimtex-]/)|                             `nxo`
+   ]*               |<plug>(vimtex-]star)|                          `nxo`
+   [/               |<plug>(vimtex-[/)|                             `nxo`
+   [*               |<plug>(vimtex-[star)|                          `nxo`
    K                |<plug>(vimtex-doc-package)|                    `n`
   --------------------------------------------------------------------- ~
 
@@ -6765,8 +6766,8 @@ A: Yes, it works. It is recommended to use the `'zathura_simple'` variant.
    5. Now install Zathura (most recent version, aka HEAD): >sh
 
       brew tap zegervdv/zathura
-      brew install girara --HEAD
-      brew install zathura --HEAD --with-synctex
+      brew install girara
+      brew install zathura --with-synctex
       brew install zathura-pdf-poppler
       mkdir -p $(brew --prefix zathura)/lib/zathura
       ln -s $(brew --prefix zathura-pdf-poppler)/libpdf-poppler.dylib $(brew --prefix zathura)/lib/zathura/libpdf-poppler.dylib
