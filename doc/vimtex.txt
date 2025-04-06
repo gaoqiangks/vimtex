@@ -79,6 +79,7 @@ CONTENTS                                                      *vimtex-contents*
       Custom mappings                           |vimtex-toc-custom-maps|
     Denite/Unite source                         |vimtex-denite| / |vimtex-unite|
     fzf.vim integration                         |vimtex-fzf|
+    fzf-lua integration                         |vimtex-fzf-lua|
   Compilation                                   |vimtex-compiler|
     Latexmk                                     |vimtex-compiler-latexmk|
     Latexrun                                    |vimtex-compiler-latexrun|
@@ -2727,7 +2728,7 @@ OPTIONS                                                        *vimtex-options*
 *g:vimtex_syntax_custom_cmds_with_concealed_delims*
   This option works exactly as |g:vimtex_syntax_custom_cmds|, except it is
   used specifically to add conceals with custom replacement characters for
-  single- and double-argument commands, e.g. >
+  single- and multi commands, e.g. >
 
     \cmd1{argument}
     \cmd2 {argument1} {argument2}
@@ -2741,7 +2742,7 @@ OPTIONS                                                        *vimtex-options*
 
     nargs ~
       Default: 1
-      Specify whether the command has 1 or 2 arguments.
+      Specify whether the command has 1 or more arguments.
 
     cchar_open ~
       Default: Undefined
@@ -2750,7 +2751,7 @@ OPTIONS                                                        *vimtex-options*
 
     cchar_mid ~
       Default: Undefined
-      Note: Only relevant if `nargs` = 2
+      Note: Only relevant if `nargs` > 1
       Specify single letter replacement for the mid (`}{`). If left
       undefined, the mid is fully concealed.
 
@@ -2843,7 +2844,7 @@ OPTIONS                                                        *vimtex-options*
 
     opts ~
       Default: Undefined
-      A string with additional options that will be passed to the `syntax
+      A string with additional options that will be passed to the `syntax`
       region` command (see |syn-region|).
 
     contains ~
@@ -2978,7 +2979,7 @@ OPTIONS                                                        *vimtex-options*
 
     robust_externalize ~
       `presets`  list of presets and target syntaxes for things like
-                 `\begin{CacheMeCode}{bash} ... \end{CacheMeCode}.
+                 `\begin{CacheMeCode}{bash} ... \end{CacheMeCode}`.
 
   Default: >vim
 
@@ -5424,6 +5425,25 @@ example, if you've defined `g:fzf_layout`, then those options can be passed to
 
   :call vimtex#fzf#run('ctli', g:fzf_layout)
 
+------------------------------------------------------------------------------
+FZF-LUA INTEGRATION                                           *vimtex-fzf-lua*
+
+                                           https://github.com/ibhagwan/fzf-lua/
+|fzf-lua| integrates the general-purpose command-line fuzzy finder |fzf| into
+neovim through Lua. It may be used to quickly navigate VimTeX's built-in ToC
+feature. To use it, define a mapping to `require("vimtex.fzf-lua").run(options)`,
+e.g. >lua
+
+  vim.keymap.set("n", "<localleader>lt", function()
+    return require("vimtex.fzf-lua").run()
+  end)
+
+Currently two options are supported: "layers" and "fzf_opts". You can pass 
+custom options to fzf-lua via "fzf_opts". 
+You can also choose to only show certain entry "layers" by passing a layer
+string. By default, all layers are displayed. To only show `content` and
+`label`s use `require("vimtex.fzf-lua").run({layers ="cl"})`.
+
 ==============================================================================
 COMPILER                                                      *vimtex-compiler*
 
@@ -5544,7 +5564,7 @@ LATEXRUN                                             *vimtex-compiler-latexrun*
 
                                         https://github.com/aclements/latexrun
 > See LaTeX run. Run latexrun.
->
+
 > latexrun fits LaTeX into a modern build environment. It hides LaTeX's
 > circular dependencies, surfaces errors in a standard and user-friendly
 > format, and generally enables other tools to do what they do best.
@@ -6614,7 +6634,7 @@ A: If you change `TEXMFHOME` in your `.bashrc` or `.zshrc` or similar and use `g
    not know about the new value of `TEXMFHOME`. The reason for this is that
    `vim` invokes shells (e.g. with `!` or `system()`) as non-interactive and
    non-login shell, which means `.bashrc` or `.zshrc` are not read.  If you
-   start `gvim` from an interactive shell which has read `.bashrc` or `.zshrc,
+   start `gvim` from an interactive shell which has read `.bashrc` or `.zshrc`,
    `gvim` inherits these values and therefore they are consistent.
 
    One can make the invoked shells interactive by setting |shellcmdflag| to
@@ -7288,4 +7308,6 @@ named vim-latex, which conflicted with Vim LaTeX-Suite which is also known as
 vim-latex.
 
 ==============================================================================
+------------------------------------------------------------------------------
+
  vim:tw=78:ts=8:ft=help:norl:fdm=marker:
