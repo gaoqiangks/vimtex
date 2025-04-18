@@ -238,7 +238,7 @@ function! s:viewer.xdo_focus_vim() dict abort " {{{1
   let l:pids = split(l:output, '\D\+')
   let l:pids = l:pids[: index(l:pids, string(l:current_pid))]
 
-  call Logvim("l:pid= ".l:output)
+  " call Logvim("l:pid= ".l:output)
   for l:pid in reverse(l:pids)
     let l:output = vimtex#jobs#capture(
           \ 'xdotool search --onlyvisible --pid ' . l:pid)

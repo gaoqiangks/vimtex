@@ -5973,7 +5973,7 @@ settings for Vim and neovim, respectively: >bash
 
   vim -v --not-a-term -T dumb -c "VimtexInverseSearch %l '%f'"
 
-  nvim --headless -c "VimtexInverseSearch %l '%f'"
+  nvim --headless -c "VimtexInverseSearch %l \"%f\""
 
 To perform an inverse search in Okular, do `shift + click` while browse mode
 is enabled. For more info, see |vimtex-synctex-inverse-search|.
