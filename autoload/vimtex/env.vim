@@ -465,9 +465,9 @@ function! s:operator_setup(operator, type) abort
     let l:new_env = s:change_prompt(s:operator_type)
 	let g:new_env = l:new_env
 	lua<<EOF
-	local env = require("lib/env")
+	local get_env = require("lib/utils").get_env
 	local env_input = vim.api.nvim_eval("g:new_env")
-	local final_env = env.get_env(env_input)
+	local final_env = get_env(env_input)
 	--print("final_env", final_env)
 	vim.g.new_env = final_env
 	--vim.api.nvim_exec('let g:new_env = luaeval("final_env")', true)
