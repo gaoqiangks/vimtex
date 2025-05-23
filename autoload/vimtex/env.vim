@@ -155,10 +155,10 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort
   "l:before l:after  当前行中, 环境前后的内容
   if l:before . l:after =~# '^\s*$'
     let l:curr_line = getline(a:close.lnum-1)
-	let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
+    let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
     if l:dot == ""
         let l:end_with_dot=0
-	else
+    else
         let l:end_with_dot=1
     endif
     let l:line = substitute(getline(a:close.lnum - 1), '[.,]\s*$', a:new[1], '')
@@ -180,10 +180,10 @@ function! vimtex#env#change_to_inline_math(open, close, new) abort
   elseif l:before =~# '^\s*$'
     let l:curr_line = getline(a:close.lnum-1)
 
-	let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$))
+    let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$))
     if l:dot == ""
         let l:end_with_dot=0
-	else
+    else
         let l:end_with_dot=1
     endif
 
@@ -254,7 +254,7 @@ function! vimtex#env#change_to_indented(open, close, new) abort
   if !empty(l:after)
     let l:after_firstcn = match(l:after, '\S')
     let l:after_firstc = l:after[l:after_firstcn]
-	" let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
+    " let l:dot = trim(matchstr(l:curr_line, '[.,]\s*$'))
     if l:after_firstc == "." || l:after_firstc == ","
         let l:after=substitute(l:after, '\s*'.l:after_firstc, '', '')
     endif
@@ -275,7 +275,7 @@ function! vimtex#env#change_to_indented(open, close, new) abort
     " if l:after_firstc == "."
     if l:after_firstc == "." 
         let l:after=substitute(l:after, '\s*\.*', '', '')
-	elseif  l:after_firstc == ","
+    elseif  l:after_firstc == ","
         let l:after=substitute(l:after, '\s*\,*', '', '')
     endif
     call append(a:close.lnum + !empty(l:before), l:after)
@@ -463,16 +463,16 @@ function! s:operator_setup(operator, type) abort
   " Ask for user input if necessary/relevant
   if s:operator ==# 'change'
     let l:new_env = s:change_prompt(s:operator_type)
-	let g:new_env = l:new_env
-	lua<<EOF
-	local get_env = require("lib/utils").get_env
-	local env_input = vim.api.nvim_eval("g:new_env")
-	local final_env = get_env(env_input)
-	--print("final_env", final_env)
-	vim.g.new_env = final_env
-	--vim.api.nvim_exec('let g:new_env = luaeval("final_env")', true)
+    let g:new_env = l:new_env
+    lua<<EOF
+    local get_env = require("lib/utils").get_env
+    local env_input = vim.api.nvim_eval("g:new_env")
+    local final_env = get_env(env_input)
+    --print("final_env", final_env)
+    vim.g.new_env = final_env
+    --vim.api.nvim_exec('let g:new_env = luaeval("final_env")', true)
 EOF
-	let l:new_env = g:new_env
+    let l:new_env = g:new_env
     if empty(l:new_env)
       let s:operator_abort = 1
       return
@@ -521,10 +521,8 @@ function! s:change_prompt(type) abort
           \ : l:open.match . ' ... ' . l:open.corr)
     let s:env_name = l:name
     let l:ret=vimtex#ui#input({
-          \ 'info':
-          \   ['Change surrounding environment: ', ['VimtexWarning', "current env: ".l:name]],
           \ 'completion': 'customlist,vimtex#env#input_complete',
-		  \ 'user_defined_prompt':"当前环境 ".l:name.", 将被修改为:",
+          \ 'user_defined_prompt':"当前环境 ".l:name.", 将被修改为:",
           \})
   endif
   call matchdelete(l:open_match)
