@@ -218,7 +218,6 @@ endfunction
 
 " }}}1
 function! s:viewer.xdo_focus_vim() dict abort " {{{1
-    call Logvim("xdo_focus")
   if !executable('xdotool') | return | endif
   if !executable('pstree') | return | endif
 
