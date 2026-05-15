@@ -27,7 +27,6 @@ filetype and syntax plugin for LaTeX files.
   - [Snippets and templates](#snippets-and-templates)
   - [Tag navigation](#tag-navigation)
 - [Alternatives](#alternatives)
-- [VimTeX on the Web](#vimtex-on-the-web)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -59,7 +58,7 @@ The following explains the most common and popular approaches.
 
 ### lazy.nvim
 
-In Neovim, [lazy.nvim](https://github.com/folke/lazy.nvim) is probably the most popular plugin manger.
+In Neovim, [lazy.nvim](https://github.com/folke/lazy.nvim) is probably the most popular plugin manager.
 To install VimTeX, add a plugin spec similar to this:
 
 ```lua

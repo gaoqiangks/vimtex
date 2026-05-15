@@ -55,14 +55,51 @@ function! vimtex#env#get_surrounding(type) abort
   let [l:open, l:close] = vimtex#delim#get_surrounding('env_math')
   if !empty(l:open) | return [l:open, l:close] | endif
 
-  " Next check for standard math environments (only works for 1 level depth)
-  let [l:open, l:close] = vimtex#delim#get_surrounding('env_tex')
-  if !empty(l:open) &&
-        \ index(s:math_envs, substitute(l:open.name, '\*$', '', '')) >= 0
-    return [l:open, l:close]
+  " Next check for standard math environments
+  let [l:open, l:close] = vimtex#delim#get_surrounding(
+        \ 'env_tex',
+        \ #{ whitelist: s:math_envs }
+        \)
+  return [l:open, l:close]
+endfunction
+
+function! vimtex#env#get_surrounding_or_next(type) abort
+  if a:type ==# 'normal'
+    return vimtex#delim#get_surrounding_or_next('env_tex')
   endif
 
-  return [{}, {}]
+  if a:type !=# 'math'
+    call vimtex#log#error('Wrong argument!')
+    return [{}, {}]
+  endif
+
+  " Now we check for math envs/regions
+  let l:posval_cursor = vimtex#pos#val(vimtex#pos#get_cursor())
+
+  " Check for special math env delimiters ($..$, etc)
+  let [l:open_sp, l:close_sp] = vimtex#delim#get_surrounding_or_next('env_math')
+  let l:posval_sp = empty(l:open_sp)
+        \ ? 500*l:posval_cursor
+        \ : vimtex#pos#val(l:open_sp)
+
+  " Early return if this match surrounds the cursor
+  if l:posval_sp <= l:posval_cursor
+    return [l:open_sp, l:close_sp]
+  endif
+
+  " Check for standard math environments
+  let [l:open_env, l:close_env] = vimtex#delim#get_surrounding_or_next(
+        \ 'env_tex',
+        \ #{ whitelist: s:math_envs }
+        \)
+  if empty(l:open_env)
+    return [l:open_sp, l:close_sp]
+  endif
+
+  let l:posval_env = vimtex#pos#val(l:open_env)
+  return l:posval_env <= l:posval_cursor || l:posval_env < l:posval_sp
+        \ ? [l:open_env, l:close_env]
+        \ : [l:open_sp, l:close_sp]
 endfunction
 
 let s:math_envs = [
@@ -132,18 +169,22 @@ endfunction
 function! vimtex#env#change(open, close, new) abort
   let l:new = get({
         \ '$': ['$', '$'],
-        \ '\(': ['\\(', '\\)'],
+        \ '\(': ['\(', '\)'],
         \ '$$': ['$$', '$$'],
         \ '\[': ['\[', '\]'],
         \}, a:new, ['\begin{' . a:new . '}', '\end{' . a:new . '}'])
 
-  " execute printf("l:new is: ".l:new)
-"echo l:new
   if index(['$', '\('], a:new) >= 0
     return vimtex#env#change_to_inline_math(a:open, a:close, l:new)
   endif
 
-  return index(['$', '\('], a:open.match) >= 0
+  let l:coming_from_inline = a:open.match ==# '$'
+        \ || (a:open.match ==# '\(' && !(
+        \      trim(getline(a:open.lnum))  ==# '\('
+        \   && trim(getline(a:close.lnum))  ==# '\)'
+        \ ))
+
+  return l:coming_from_inline
         \ ? vimtex#env#change_to_indented(a:open, a:close, l:new)
         \ : vimtex#env#change_in_place(a:open, a:close, l:new)
 endfunction
@@ -414,6 +455,7 @@ function! vimtex#env#toggle_math() abort
 
   let l:current = get(l:open, 'name', l:open.match)
   let l:target = get(g:vimtex_env_toggle_math_map, l:current, '$')
+        \  .. (get(l:open, 'starred', 0) ? '*' : '')
 
   call vimtex#env#change(l:open, l:close, l:target)
 endfunction

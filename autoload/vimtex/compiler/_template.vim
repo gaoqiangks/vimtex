@@ -62,6 +62,41 @@ function! s:compiler.__check_requirements() abort dict " {{{1
 endfunction
 
 " }}}1
+
+function! s:compiler._get_executable_string() abort dict " {{{1
+  " Convert executable (string or list) to a command string
+  "
+  " The executable property can be:
+  "   - A string: 'latexmk'
+  "   - A list: ['docker', 'exec', 'my-container', 'latexmk']
+  "
+  if type(self.executable) == v:t_string
+    return self.executable
+  elseif type(self.executable) == v:t_list
+    return join(self.executable)
+  endif
+
+  throw 'VimTeX: executable must be a string or list'
+endfunction
+
+" }}}1
+function! s:compiler._is_executable_available() abort dict " {{{1
+  " Check if the executable is available
+  "
+  " For string executables, check directly.
+  " For list executables, check only the first element.
+  "
+  if type(self.executable) == v:t_string
+    return executable(self.executable)
+  endif
+
+  return type(self.executable) == v:t_list
+        \ && !empty(self.executable)
+        \ && executable(self.executable[0])
+endfunction
+
+" }}}1
+
 function! s:compiler.__init() abort dict " {{{1
 endfunction
 
@@ -136,6 +171,7 @@ function! s:compiler._create_build_dir(path) abort dict " {{{1
   call map(l:dirs, {_, x ->
         \ (vimtex#paths#is_abs(a:path) ? '' : self.file_info.root . '/')
         \ . a:path . '/' . x})
+  call map(l:dirs, {_, x -> simplify(x) })
   call filter(l:dirs, '!isdirectory(v:val)')
   if empty(l:dirs) | return | endif
 

@@ -51,6 +51,8 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
   syntax cluster texClusterOpt contains=
         \texCmd,
         \texComment,
+        \texTabularChar,
+        \texSpecialChar,
         \texGroup,
         \texLength,
         \texOpt,
@@ -261,7 +263,7 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
         \})
   call vimtex#syntax#core#new_arg('texNewcmdArgBody')
   " The default regexp v2 seems to be faster here:
-  syntax match texNewcmdParm contained "#\+\d" containedin=texNewcmdArgBody
+  syntax match texNewcmdParm contained "#\+[1-9]" containedin=texNewcmdArgBody
 
   " \newenvironment
   syntax match texCmdNewenv nextgroup=texNewenvArgName skipwhite skipnl "\%#=1\\\%(re\)\?newenvironment\>"
@@ -272,15 +274,15 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
         \})
   call vimtex#syntax#core#new_arg('texNewenvArgBegin', {'next': 'texNewenvArgEnd'})
   call vimtex#syntax#core#new_arg('texNewenvArgEnd')
-  syntax match texNewenvParm contained "#\+\d" containedin=texNewenvArgBegin,texNewenvArgEnd
+  syntax match texNewenvParm contained "#\+[1-9]" containedin=texNewenvArgBegin,texNewenvArgEnd
 
   " Definitions/Commands
   " E.g. \def \foo #1#2 {foo #1 bar #2 baz}
-  syntax match texCmdDef "\%#=1\\def\>" nextgroup=texDefArgName skipwhite skipnl
+  syntax match texCmdDef "\%#=1\\[egx]\?def\>" nextgroup=texDefArgName skipwhite skipnl
   syntax match texDefArgName contained nextgroup=texDefParmPre,texDefArgBody skipwhite skipnl "\%#=1\\[a-zA-Z@]\+"
   syntax match texDefArgName contained nextgroup=texDefParmPre,texDefArgBody skipwhite skipnl "\%#=1\\[^a-zA-Z@]"
   syntax match texDefParmPre contained nextgroup=texDefArgBody skipwhite skipnl "#[^{]*"
-  syntax match texDefParm contained "#\+\d" containedin=texDefParmPre,texDefArgBody
+  syntax match texDefParm contained "#\+[1-9]" containedin=texDefParmPre,texDefArgBody
   call vimtex#syntax#core#new_arg('texDefArgBody')
 
   " \let
@@ -526,13 +528,14 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
         \ start="\%#=1\\\%(ExplSyntaxOn\|ProvidesExpl\%(Package\|Class\|File\)\)"
         \ end="\%#=1\\ExplSyntaxOff\|\%$"
         \ transparent
-        \ contains=TOP,@NoSpell
+        \ contains=TOP,@NoSpell,TexError
 
   call vimtex#syntax#core#new_arg('texE3Group', {
         \ 'opts': 'contained containedin=@texClusterE3',
+        \ 'contains': 'TOP,@NoSpell,TexError',
         \})
 
-  syntax match texE3Cmd "\\\w\+"
+  syntax match texE3Cmd "\\\h\+"
         \ contained containedin=@texClusterE3
         \ nextgroup=texE3Opt,texE3Arg skipwhite skipnl
   call vimtex#syntax#core#new_opt('texE3Opt', {'next': 'texE3Arg'})
@@ -553,7 +556,7 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
         \ contains=texE3Type
 
   syntax match texE3Type ":[a-zA-Z]*" contained
-  syntax match texE3Parm "#\+\d" contained containedin=@texClusterE3
+  syntax match texE3Parm "#\+[1-9]" contained containedin=@texClusterE3
 
   syntax cluster texClusterE3 contains=texE3Zone,texE3Arg,texE3Group,texE3Opt
 
@@ -701,6 +704,11 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
       call s:match_conceal_fancy()
     endif
 
+    " Conceal tabular characters
+    if g:vimtex_syntax_conceal.texTabularChar
+      syntax match texTabularChar "\\\\" conceal cchar=⏎
+    endif
+
     " Conceal spacing commands
     if g:vimtex_syntax_conceal.spacing
       call s:match_conceal_spacing()
@@ -733,6 +741,15 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
   endif
 
   " }}}2
+  " {{{2 Commands: \begin{macrocode}
+
+  " * In documented TeX Format, the 'macrocode' environment separates
+  "   documentation from actual code, hence should get special highlighting.
+  if expand('%:e') ==# 'dtx'
+      syntax match texDtxMacrocode "\%#=2^% \{4}\\\(begin\|end\){macrocode}"
+  endif
+
+  " }}}2
 
   let b:current_syntax = 'tex'
 
@@ -762,7 +779,6 @@ function! vimtex#syntax#core#init_rules() abort " {{{1
         \texMathDelimMod,
         \texMathDelim,
         \@NoSpell
-
 endfunction
 
 " }}}1
@@ -811,7 +827,7 @@ function! vimtex#syntax#core#init_options() abort " {{{1
   " Enable syntax foldlevel, but since it was introduced in Vim patch 8.2.0865
   " we must protect users with older Vim versions.
   try
-    syntax xxfoldlevel start
+    syntax foldlevel start
   catch /E410:/
   endtry
 endfunction
@@ -822,6 +838,7 @@ function! vimtex#syntax#core#init_highlights() abort " {{{1
   " See :help group-name for list of conventional group names
 
   " Primitive TeX highlighting groups
+  highlight def link texDtxMacrocode     Special
   highlight def link texArg              Include
   highlight def link texCmd              Statement
   highlight def link texCmdSpaceCodeChar Special
@@ -1079,6 +1096,8 @@ function! vimtex#syntax#core#new_cmd(cfg) abort " {{{1
   let l:group_cmd = l:pre . 'Cmd' . l:name
   let l:group_opt = l:pre . l:name . 'Opt'
   let l:group_arg = l:pre . l:name . 'Arg'
+  let l:group_arg_space = l:pre . l:name . 'Argspace'
+  let l:group_arg_char = l:pre . l:name . 'ArgChar'
 
   " Specify rules for next groups
   if !empty(l:cfg.nextgroup)
@@ -1091,7 +1110,7 @@ function! vimtex#syntax#core#new_cmd(cfg) abort " {{{1
 
       let l:opt_cfg = {'opts': l:cfg.optconceal ? 'conceal' : ''}
       if l:cfg.arg
-        let l:opt_cfg.next = l:group_arg
+        let l:opt_cfg.next = l:group_arg_space
       endif
       call vimtex#syntax#core#new_opt(l:group_opt, l:opt_cfg)
 
@@ -1100,7 +1119,13 @@ function! vimtex#syntax#core#new_cmd(cfg) abort " {{{1
 
     " Add syntax rules for the argument group
     if l:cfg.arg
-      let l:nextgroups += [l:group_arg]
+      let l:nextgroups += [l:group_arg_space]
+
+      execute 'syntax match' l:group_arg_space '"\s*"'
+            \ 'contained nextgroup=' .. l:group_arg_char .. ',' .. l:group_arg
+            \ l:cfg.conceal ? 'conceal' : ''
+
+      execute 'syntax match' l:group_arg_char '"\w"' 'contained'
 
       let l:arg_cfg = {'opts': 'contained'}
       if l:cfg.conceal && empty(l:cfg.concealchar)
@@ -1127,6 +1152,7 @@ function! vimtex#syntax#core#new_cmd(cfg) abort " {{{1
             \}, l:cfg.argstyle,
             \ l:cfg.mathmode ? 'texMathArg' : '')
       if !empty(l:style)
+        execute 'highlight def link' l:group_arg_char l:style
         execute 'highlight def link' l:group_arg l:style
       endif
     endif
@@ -2471,11 +2497,11 @@ endfunction
 
 " }}}1
 function! s:match_conceal_fancy() abort " {{{1
+  syntax match texSpecialChar "\\_" conceal cchar=_
   syntax match texCmd         "\%#=1\\colon\>" conceal cchar=:
   syntax match texCmd         "\%#=1\\dots\>"  conceal cchar=…
   syntax match texCmd         "\%#=1\\slash\>" conceal cchar=/
   syntax match texCmd         "\%#=1\\ldots\>" conceal cchar=…
-  syntax match texTabularChar "\\\\"      conceal cchar=⏎
 
   syntax match texCmdItem     "\%#=1\\item\>"  conceal cchar=○
         \ nextgroup=texItemLabelConcealed

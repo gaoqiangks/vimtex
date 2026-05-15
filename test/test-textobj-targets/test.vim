@@ -13,6 +13,11 @@ silent edit test.tex
 
 if empty($INMAKE) | finish | endif
 
+" IMPORTANT NOTE 2025-06-28; 2025-12-17
+" As of neovim 0.12 there are default mapping clashes that prevents "in" and
+" "an" from working, see `:h v_an` and `:h v_in`.
+" There are therefore ignored in the tests.
+
 function! s:testVimtexCmdtargets(name)
   silent! edit!
   normal! "lyy
@@ -21,15 +26,14 @@ function! s:testVimtexCmdtargets(name)
     for cnt in ['', '1', '2']
       for lastnext in ['l', '', 'n']
         for iaIA in ['I', 'i', 'a', 'A']
-          for target in ['c']
-            let l:motion = cnt . iaIA . lastnext . target
-            if operator ==# 'c' && l:motion =~# '^2.c$'
-              continue
-            endif
+          let l:motion = cnt . iaIA . lastnext . 'c'
+          if (operator ==# 'c' && l:motion =~# '^2.c$')
+                \ || (l:motion =~# '[ia]nc$')
+            continue
+          endif
 
-            normal! "lpfx
-            call s:execute(operator, l:motion)
-          endfor
+          normal! "lpfx
+          call s:execute(operator, l:motion)
         endfor
       endfor
     endfor
