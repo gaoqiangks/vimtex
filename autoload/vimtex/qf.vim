@@ -84,6 +84,7 @@ function! vimtex#qf#open(force) abort " {{{1
   if a:force || (g:vimtex_quickfix_mode > 0 && l:errors_or_warnings)
     let s:previous_window = win_getid()
     botright cwindow
+    call s:qf_apply_highlights()
     if g:vimtex_quickfix_mode == 2
       redraw
       call win_gotoid(s:previous_window)
@@ -154,6 +155,10 @@ function! vimtex#qf#setqflist(...) abort " {{{1
     catch
     endtry
 
+    if vimtex#qf#is_open()
+      call s:qf_apply_highlights()
+    endif
+
     " Jump to first error if wanted
     if l:jump
       cfirst
@@ -198,6 +203,27 @@ endfunction
 
 function! s:qf_has_errors() abort " {{{1
   return len(filter(getqflist(), 'v:val.type ==# ''E''')) > 0
+endfunction
+
+" }}}1
+function! s:qf_apply_highlights() abort " {{{1
+  let l:qf_wins = map(
+        \ filter(getwininfo(),
+        \   {_, x -> x.tabnr == tabpagenr() && x.quickfix && !x.loclist}),
+        \ {_, x -> x.winid})
+
+  for l:winid in l:qf_wins
+    call win_execute(l:winid,
+          \ 'if exists("w:vimtex_qf_match_undefined_control_sequence")'
+          \ . ' | silent! call matchdelete(w:vimtex_qf_match_undefined_control_sequence)'
+          \ . ' | unlet w:vimtex_qf_match_undefined_control_sequence'
+          \ . ' | endif')
+
+    call win_execute(l:winid,
+          \ "let w:vimtex_qf_match_undefined_control_sequence ="
+          \ . " matchadd('VimtexError',"
+          \ . " 'Undefined control sequence\\.\\s\\+\\zs\\\\\\a\\w*\\ze\\%($\\|\\s\\)')")
+  endfor
 endfunction
 
 " }}}1
