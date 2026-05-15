@@ -330,6 +330,7 @@ function! vimtex#options#init() abort " {{{1
   call s:init_option('vimtex_quickfix_open_on_warning', 1)
   call s:init_option('vimtex_quickfix_blgparser', {})
   call s:init_option('vimtex_quickfix_autoclose_after_keystrokes', 0)
+  call s:init_option('vimtex_quickfix_highlight_ucs', 1)
 
   call s:init_option('vimtex_subfile_start_local', 0)
 
@@ -629,6 +630,7 @@ function! s:init_highlights() abort " {{{1
         \ ['VimtexWarning', 'WarningMsg'],
         \ ['VimtexError', 'Error'],
         \ ['VimtexFatal', 'ErrorMsg'],
+        \ ['VimtexQfUndefinedCmd', 'SpellBad'],
         \ ['VimtexBlink', 'PMenu'],
         \ ['VimtexTocHelp', 'helpVim'],
         \ ['VimtexTocHelpKey', 'ModeMsg'],

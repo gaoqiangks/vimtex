@@ -158,6 +158,9 @@ function! vimtex#qf#setqflist(...) abort " {{{1
     if l:jump
       cfirst
     endif
+
+    " Highlight undefined control sequences in source buffers
+    call s:highlight_ucs()
   catch /VimTeX: No log file found/
     throw 'VimTeX: No log file found'
   endtry
@@ -228,6 +231,96 @@ function! s:qf_autoclose_check() abort " {{{1
     autocmd! vimtex_qf_autoclose
     augroup! vimtex_qf_autoclose
   endif
+endfunction
+
+" }}}1
+
+
+function! s:highlight_ucs() abort " {{{1
+  call s:highlight_ucs_clear()
+
+  if !g:vimtex_quickfix_highlight_ucs | return | endif
+
+  for l:qf in getqflist()
+    if l:qf.text !~# 'Undefined control sequence' | continue | endif
+    if l:qf.bufnr <= 0 | continue | endif
+
+    " Extract the undefined command: the last \word at the end of the text.
+    " The qf text includes the 'l.N ...<context> \cmd' continuation line, so
+    " the undefined command is the rightmost \word token.
+    let l:cmd = matchstr(l:qf.text, '\\\w\+\ze\s*$')
+    if empty(l:cmd) | continue | endif
+
+    " Find the rightmost occurrence of the command on that source line
+    let l:srcline = get(getbufline(l:qf.bufnr, l:qf.lnum), 0, '')
+    let l:pat = '\\' . escape(l:cmd[1:], '.*[]^$~\') . '\>'
+    let l:col = -1
+    let l:pos = 0
+    while 1
+      let l:m = match(l:srcline, l:pat, l:pos)
+      if l:m < 0 | break | endif
+      let l:col = l:m
+      let l:pos = l:m + 1
+    endwhile
+    if l:col < 0 | continue | endif
+
+    call s:highlight_ucs_add(l:qf.bufnr, l:qf.lnum, l:col + 1, len(l:cmd))
+  endfor
+endfunction
+
+" }}}1
+function! s:highlight_ucs_clear() abort " {{{1
+  if has('nvim')
+    for l:bufnr in get(s:, 'ucs_buffers', [])
+      if bufexists(l:bufnr)
+        call nvim_buf_clear_namespace(l:bufnr, s:highlight_ucs_ns(), 0, -1)
+      endif
+    endfor
+  else
+    for l:item in get(s:, 'ucs_props', [])
+      if bufexists(l:item.bufnr)
+        silent! call prop_remove(
+              \ {'type': 'VimtexQfUndefinedCmd', 'bufnr': l:item.bufnr},
+              \ l:item.lnum)
+      endif
+    endfor
+    let s:ucs_props = []
+  endif
+  let s:ucs_buffers = []
+endfunction
+
+" }}}1
+function! s:highlight_ucs_add(bufnr, lnum, col, len) abort " {{{1
+  if has('nvim')
+    call nvim_buf_set_extmark(a:bufnr, s:highlight_ucs_ns(), a:lnum - 1, a:col - 1, {
+          \ 'end_col': a:col - 1 + a:len,
+          \ 'hl_group': 'VimtexQfUndefinedCmd',
+          \})
+  else
+    if empty(prop_type_get('VimtexQfUndefinedCmd'))
+      call prop_type_add('VimtexQfUndefinedCmd',
+            \ {'highlight': 'VimtexQfUndefinedCmd', 'combine': 1})
+    endif
+    silent! call prop_add(a:lnum, a:col, {
+          \ 'length': a:len,
+          \ 'type': 'VimtexQfUndefinedCmd',
+          \ 'bufnr': a:bufnr,
+          \})
+    let s:ucs_props = get(s:, 'ucs_props', [])
+    call add(s:ucs_props, {'bufnr': a:bufnr, 'lnum': a:lnum})
+  endif
+  let s:ucs_buffers = get(s:, 'ucs_buffers', [])
+  if index(s:ucs_buffers, a:bufnr) < 0
+    call add(s:ucs_buffers, a:bufnr)
+  endif
+endfunction
+
+" }}}1
+function! s:highlight_ucs_ns() abort " {{{1
+  if !exists('s:ucs_ns')
+    let s:ucs_ns = nvim_create_namespace('vimtex_ucs')
+  endif
+  return s:ucs_ns
 endfunction
 
 " }}}1

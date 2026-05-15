@@ -2489,6 +2489,16 @@ OPTIONS                                                        *vimtex-options*
 
   Default value: 1
 
+*g:vimtex_quickfix_highlight_ucs*
+  When enabled, VimTeX will highlight undefined control sequences directly in
+  the source buffer after each compilation. The undefined command is
+  highlighted using the |hl-VimtexQfUndefinedCmd| highlight group, which
+  defaults to |hl-SpellBad|.
+
+  Set to 0 to disable this feature.
+
+  Default value: 1
+
 *g:vimtex_subfile_start_local*
   This option allows to specify that one should start with the local file for
   subfile'd documents instead of the main project file. See |vimtex-subfiles|
