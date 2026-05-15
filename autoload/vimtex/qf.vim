@@ -13,6 +13,10 @@ function! vimtex#qf#init_buffer() abort " {{{1
 endfunction
 
 " }}}1
+
+let s:qf_pattern_undefined_control_sequence
+      \ = 'Undefined control sequence\.\s\+\zs\\\a\w*\ze\%($\|\s\)'
+
 function! vimtex#qf#init_state(state) abort " {{{1
   if !g:vimtex_quickfix_enabled | return | endif
 
@@ -207,22 +211,20 @@ endfunction
 
 " }}}1
 function! s:qf_apply_highlights() abort " {{{1
+  let l:match_var = 'w:vimtex_qf_match_undefined_control_sequence'
   let l:qf_wins = map(
         \ filter(getwininfo(),
         \   {_, x -> x.tabnr == tabpagenr() && x.quickfix && !x.loclist}),
         \ {_, x -> x.winid})
 
   for l:winid in l:qf_wins
-    call win_execute(l:winid,
-          \ 'if exists("w:vimtex_qf_match_undefined_control_sequence")'
-          \ . ' | silent! call matchdelete(w:vimtex_qf_match_undefined_control_sequence)'
-          \ . ' | unlet w:vimtex_qf_match_undefined_control_sequence'
-          \ . ' | endif')
+    call win_execute(l:winid, printf(
+          \ 'if exists("%s") | silent! call matchdelete(%s) | unlet %s | endif',
+          \ l:match_var, l:match_var, l:match_var))
 
-    call win_execute(l:winid,
-          \ "let w:vimtex_qf_match_undefined_control_sequence ="
-          \ . " matchadd('VimtexError',"
-          \ . " 'Undefined control sequence\\.\\s\\+\\zs\\\\\\a\\w*\\ze\\%($\\|\\s\\)')")
+    call win_execute(l:winid, printf(
+          \ 'let %s = matchadd("VimtexError", %s)',
+          \ l:match_var, string(s:qf_pattern_undefined_control_sequence)))
   endfor
 endfunction
 
