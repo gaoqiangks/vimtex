@@ -67,4 +67,22 @@ try
 catch
 endtry
 
+
+" Undefined control sequence command should be highlighted in quickfix
+let s:current_winid = win_getid()
+call vimtex#qf#open(1)
+
+let s:qf_winid = getqflist({'winid': 1}).winid
+call assert_true(s:qf_winid > 0)
+
+call win_gotoid(s:qf_winid)
+
+let s:has_match = !empty(filter(getmatches(),
+      \ {_, x -> x.group ==# 'VimtexError'
+      \   && x.pattern ==# 'Undefined control sequence\.\s\+\zs\\\a\w*\ze\%($\|\s\)'}))
+call assert_true(s:has_match)
+
+call win_gotoid(s:current_winid)
+cclose
+
 call vimtex#test#finished()
