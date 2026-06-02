@@ -1372,8 +1372,8 @@ OPTIONS                                                        *vimtex-options*
 
 *g:vimtex_parser_cmd_separator_check*
   This option specifies the policy for deciding whether successive groups of
-  `[opt]` and `{arg}` following a `\command` should be recognized as arguments
-  to that `\command`.
+  `[opt]`, `{arg}`, `(arg)`, and `<overlay>` following a `\command` should be
+  recognized as arguments to that `\command`.
 
   In fact, parsing a LaTeX command without additional knowledge is a hard
   problem. When we read `\foo{bar}{baz}` — is `{baz}` going to be consumed as
@@ -1388,9 +1388,9 @@ OPTIONS                                                        *vimtex-options*
     \foo<overlay>[[opt]{arg}]...
     \begin{name}<overlay>[[opt]{arg}]...
 <
-  The parser greedily swallows as many groups of `[opt]` and `{arg}` as
-  possible as long as the function specified via this option returns true for
-  the text between successive such groups.
+  The parser greedily swallows as many such groups as possible as long as the
+  function specified via this option returns true for the text between
+  successive groups.
 
   The default function will allow a line break and possibly white space on the
   preceding line before a new group. E.g.: >latex
@@ -1408,8 +1408,14 @@ OPTIONS                                                        *vimtex-options*
 <
   The option should be either the name of the function (a string) or
   a |Funcref|. The function takes a single argument, which is the string
-  between successive `[opt]` and `{arg}` groups. It should return |v:true|
-  if the parser should continue and |v:false| if the parser should stop.
+  between successive groups. It should return |v:true| if the parser should
+  continue and |v:false| if the parser should stop.
+
+  The check applies to all four group types: `[opt]`, `{arg}`, `(arg)`, and
+  `<overlay>`. Note that `(arg)` and `<overlay>` groups are only matched on
+  a single line, so for these the separator string will never contain a
+  newline; the default rule therefore captures them only when they directly
+  touch the preceding group.
 
   A user may want to change this behaviour e.g. to specify that all whitespace
   should be allowed, including and up to a single newline: >vim
@@ -3069,6 +3075,40 @@ OPTIONS                                                        *vimtex-options*
           \ 'dfrac': 'INLINE',
           \}
 
+*g:vimtex_toggle_star_cmds*
+  This is a whitelist of the commands whose star may be toggled with
+  |<plug>(vimtex-cmd-toggle-star)| (mapped to `tsc` by default) and, for
+  commands, |<plug>(vimtex-cmd-toggle-star-agn)|. The toggle is a no-op for any
+  command whose name is not matched by the whitelist. This prevents toggling
+  the star of commands and math literals that have no meaningful starred form,
+  e.g. `\sin`, `\frac`, or `\left`.
+
+  Each list entry is a |/\v| "very magic" pattern that is matched against the
+  full command name (without the leading backslash or a trailing star) and
+  case-insensitively. To extend the whitelist, copy the default and append your
+  own entries.
+
+  If the list is empty, no filtering is done and the star of any command may be
+  toggled.
+
+  Default value: >vim
+
+    let g:vimtex_toggle_star_cmds = [
+          \ 'part',
+          \ '%(sub)*section',
+          \ '%(sub)*paragraph',
+          \ '[vh]space',
+          \ '\w*cite\w*',
+          \ '\w*ref',
+          \ '%(re)?newcommand',
+          \ 'providecommand',
+          \ 'DeclareRobustCommand',
+          \ 'DeclareMathOperator',
+          \ '%(re)?newenvironment',
+          \ 'includegraphics',
+          \ 'verb',
+          \]
+<
 *g:vimtex_toc_enabled*
   Use this option to disable/enable table of contents (ToC).
 
@@ -3835,7 +3875,8 @@ MAP DEFINITIONS                                               *vimtex-mappings*
 
 *<plug>(vimtex-cmd-toggle-star)*
 *<plug>(vimtex-env-toggle-star)*
-  Toggle starred command or environment.
+  Toggle starred command or environment. For commands, the toggle only applies
+  to commands matched by |g:vimtex_toggle_star_cmds|.
 
 *<plug>(vimtex-cmd-toggle-star-agn)*
   Toggle starred command or environment, whichever is closest to the cursor.
