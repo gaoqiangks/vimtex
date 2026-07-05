@@ -261,7 +261,7 @@ function! s:get_sel_delimited_visual(is_inner, type, startpos) abort " {{{1
   endif
 
   call vimtex#pos#set_cursor(a:startpos)
-  let [l:open, l:close] = s:get_surrounding(a:type)
+  let [l:open, l:close] = s:get_surrounding_or_next(a:type)
   if empty(l:open) | return {} | endif
   let l:object = s:get_sel_delimited(l:open, l:close, a:is_inner)
   if a:is_inner | return l:object | endif
@@ -501,7 +501,7 @@ let s:section_search = '\v%(%(\\@<!%(\\\\)*)@<=\%.*)@<!\s*\\\zs('
       \   '%(begin|end)\{\zsdocument\ze\}'
       \  ], '|')
       \ .. ')'
-      \ .. '|^\s*\% Fake\zs(part|chapter|%(sub)*section)'
+      \ .. '|^\s*\% [fF]ake\zs(part|chapter|%(sub)*section)'
 
 " Dictionary to give values to sections in order to compare them
 let s:section_to_val = {

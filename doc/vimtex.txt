@@ -86,6 +86,7 @@ CONTENTS                                                      *vimtex-contents*
     Latexrun                                    |vimtex-compiler-latexrun|
     Tectonic                                    |vimtex-compiler-tectonic|
     Arara                                       |vimtex-compiler-arara|
+    TeXpresso                                   |vimtex-compiler-texpresso|
     Generic                                     |vimtex-compiler-generic|
   Syntax Checking (Linting)                     |vimtex-lint|
   Grammar Checking                              |vimtex-grammar|
@@ -94,6 +95,7 @@ CONTENTS                                                      *vimtex-contents*
   View                                          |vimtex-view|
     Viewer configuration                        |vimtex-view-configuration|
       Evince                                    |vimtex-view-evince|
+      Galley                                    |vimtex-view-galley|
       MuPDF                                     |vimtex-view-mupdf|
       Okular                                    |vimtex-view-okular|
       qpdfview                                  |vimtex-view-qpdfview|
@@ -149,7 +151,8 @@ detection for `.tex`. The user may prevent this overriding by specifying the
 ------------------------------------------------------------------------------
 FEATURE OVERVIEW                                              *vimtex-features*
 
-- Document compilation with `latexmk`, `latexrun`, `tectonic` or `arara`
+- Document compilation with `latexmk`, `latexrun`, `tectonic`, `arara` or
+  `texpresso`
 - LaTeX log parsing for quickfix entries using
   - internal method
   - `pplatex`
@@ -247,14 +250,15 @@ Vim configuration ~
   |vimtex-faq-treesitter|.
 
   Some of the VimTeX scripts contain UTF-8 characters, and as such, it is
-  necessary to have the 'encoding' option set to utf8. This is not necessary
+  necessary to have the 'encoding' option set to utf-8. This is not necessary
   in neovim, only in Vim. Add the following to your vimrc file: >vim
 
-    set encoding=utf8
+    autocmd FileType tex set encoding=utf-8
 
 Compiler backend ~
 
-  VimTeX uses `latexmk`, `latexrun`, `tectonic` or `arara` to compile the LaTeX document.
+  VimTeX uses `latexmk`, `latexrun`, `tectonic`, `arara` or `texpresso` to
+  compile the LaTeX document.
 
     `latexmk`: http://users.phys.psu.edu/~collins/software/latexmk-jcc
     "a perl script for running LaTeX the correct number of times to resolve
@@ -285,6 +289,15 @@ Compiler backend ~
     `arara` is a TeX automation tool similar to the above mentioned tools,
   but where the compilation behaviour is typically defined in the preamble
   of the document. (|vimtex-compiler-arara|)
+
+    `texpresso`: https://github.com/let-def/texpresso
+    `texpresso` provides live rendering by combining a forked XeTeX engine
+  with a custom PDF viewer. It communicates incremental buffer changes via
+  stdio, allowing the preview to update incrementally as you type. It
+  supports SyncTeX forward and inverse search and quickfix integration.
+  Unlike the other compilers it only does a single TeX pass, so bibliography
+  and table of contents require a separate build step.
+  (|vimtex-compiler-texpresso|)
 
 Clientserver ~
                                                           *vimtex-clientserver*
@@ -968,6 +981,7 @@ OPTIONS                                                        *vimtex-options*
     `latexrun`   |vimtex-compiler-latexrun|   |g:vimtex_compiler_latexrun|
     `tectonic`   |vimtex-compiler-tectonic|   |g:vimtex_compiler_tectonic|
     `arara`      |vimtex-compiler-arara|      |g:vimtex_compiler_arara|
+    `texpresso`  |vimtex-compiler-texpresso|  |g:vimtex_compiler_texpresso|
     `generic`    |vimtex-compiler-generic|    |g:vimtex_compiler_generic|
 
   In the second variant, the option must be specified as the name of
@@ -1274,6 +1288,25 @@ OPTIONS                                                        *vimtex-options*
 
   hooks ~
     Same as |g:vimtex_compiler_latexmk| / `hooks`.
+
+*g:vimtex_compiler_texpresso*
+  This dictionary allows customization of the |vimtex-compiler-texpresso|
+  compiler. The values set by the user will take precedence over the default
+  values.
+
+  Default value: >vim
+
+    let g:vimtex_compiler_texpresso = {
+        \ 'options' : [],
+        \}
+<
+  The default value shows which entries may be changed. Here the different
+  keys are explained in more detail:
+
+  options ~
+    Extra options passed to `texpresso`, in addition to the `-json` and
+    `-lines` flags that VimTeX always supplies internally. Use this to pass
+    engine selection flags such as `-texlive` or `-tectonic`.
 
 *g:vimtex_compiler_generic*
   This dictionary allows customization of the |vimtex-compiler-generic|
@@ -1902,10 +1935,10 @@ OPTIONS                                                        *vimtex-options*
                         The fold function also recognizes "fake" sections.
                         That is, it parses comments similar to: >
 
-                          % Fakepart title
+                          % fakepart title
                           % Fakechapter title
                           % Fakesection title
-                          % Fakesubsection title
+                          % fakesubsection title
 <
                         The fake sections are folded at the same level as the
                         corresponding "real" sections. The fold title is the
@@ -2316,6 +2349,18 @@ OPTIONS                                                        *vimtex-options*
   in TikZ pictures.
 
   Default value: 1
+
+*g:vimtex_main_choose_first*
+  When VimTeX cannot unambiguously determine the main project file, it will by
+  default prompt the user to select the appropriate main file from a list of
+  candidates (see |vimtex-multi-file| and |g:vimtex_main_filename|). This
+  prompt blocks until the user makes a selection.
+
+  If this option is enabled, VimTeX will instead silently pick the first
+  candidate without prompting. This may be useful e.g. in automated or
+  non-interactive contexts where the blocking prompt is undesired.
+
+  Default value: 0
 
 *g:vimtex_mappings_enabled*
   Control whether or not to load the default mappings.
@@ -3458,6 +3503,7 @@ OPTIONS                                                        *vimtex-options*
 
   Possible values:
     * `'general'`
+    * `'galley'`            |vimtex-view-galley|
     * `'mupdf'`             |vimtex-view-mupdf|
     * `'skim'`              |vimtex-view-skim|
     * `'zathura'`           |vimtex-view-zathura|
@@ -3522,6 +3568,19 @@ OPTIONS                                                        *vimtex-options*
   which some users prefer.
 
   Default value: `''`
+
+*g:vimtex_view_galley_activate*
+  Set this option to 1 to make Galley have focus and be moved to the
+  foreground after command |:VimtexView| or compiler callback. When 0, Galley
+  is opened and updated in the background.
+
+  Default value: 0
+
+*g:vimtex_view_galley_sync*
+  Set this option to 1 to make Galley perform a forward search after successful
+  compilation.
+
+  Default value: 0
 
 *g:vimtex_view_skim_activate*
   Set this option to 1 to make Skim have focus after command |:VimtexView| in
@@ -5385,7 +5444,8 @@ document. The ToC entries may be activated/jumped to with <cr> or <space>.
 There are currently four different "layers" of entries:
 
 * content  This is the main part and the "real" ToC
-* todo     This shows TODOs from comments and `\todo{...}` commands
+* todo     This shows TODOs from comments, `\todo{...}` commands, and commands
+           from the `fixme` package
 * label    This shows `\label{...}` commands
 * include  This shows included files
 
@@ -5573,10 +5633,11 @@ COMPILER                                                      *vimtex-compiler*
 VimTeX provides an interface to the following LaTeX compilers/compiler
 backends:
 
-* |vimtex-compiler-latexmk|   http://users.phys.psu.edu/~collins/software/latexmk-jcc
-* |vimtex-compiler-latexrun|  https://github.com/aclements/latexrun
-* |vimtex-compiler-tectonic|  https://tectonic-typesetting.github.io/
-* |vimtex-compiler-arara|     https://github.com/cereda/arara
+* |vimtex-compiler-latexmk|    http://users.phys.psu.edu/~collins/software/latexmk-jcc
+* |vimtex-compiler-latexrun|   https://github.com/aclements/latexrun
+* |vimtex-compiler-tectonic|   https://tectonic-typesetting.github.io/
+* |vimtex-compiler-arara|      https://github.com/cereda/arara
+* |vimtex-compiler-texpresso|  https://aur.archlinux.org/packages/texpresso-git
 * |vimtex-compiler-generic|
 
 The interface is implemented in a general way, which makes it relatively easy
@@ -5621,6 +5682,7 @@ Associated settings:
 * |g:vimtex_compiler_latexrun_engines|
 * |g:vimtex_compiler_tectonic|
 * |g:vimtex_compiler_arara|
+* |g:vimtex_compiler_texpresso|
 * |g:vimtex_compiler_generic|
 * |$VIMTEX_OUTPUT_DIRECTORY|
 
@@ -5754,6 +5816,49 @@ Note: It is not possible to directly specify an output directory from VimTeX.
       may still want to specify custom output directories, VimTeX allows to
       customize the output directory through the environment variable
       |$VIMTEX_OUTPUT_DIRECTORY|.
+
+------------------------------------------------------------------------------
+TEXPRESSO                                         *vimtex-compiler-texpresso*
+
+                                      https://github.com/let-def/texpresso
+> TeXpresso is a live rendering and error reporting tool for LaTeX.
+
+`texpresso` is a compiler backend that provides a "live rendering" experience:
+the preview updates incrementally as the buffer changes, without any manual
+save or recompile step. It combines a forked XeTeX engine with a custom
+rendering pipeline backed by MuPDF.
+
+Unlike the other compiler backends, `texpresso` always runs in continuous mode
+and communicates with VimTeX through a JSON protocol over stdio. This enables:
+  - Incremental preview updates as the buffer changes (including unsaved edits)
+  - SyncTeX forward search (cursor position → PDF page)
+  - SyncTeX inverse search (PDF click → cursor position)
+  - Quickfix integration for compiler errors and warnings
+
+`texpresso` works by forking the TeX process to take periodic snapshots. When
+the buffer changes, compilation resumes from the nearest snapshot to the edit,
+so on average only the current page needs to be recomputed.
+
+Requirements ~
+
+  `texpresso` must be installed and available as `texpresso` in `$PATH`.
+  The bundled `texpresso-xetex` engine must also be present (it is included
+  in the standard upstream installation). See the upstream installation
+  instructions:
+
+    https://github.com/let-def/texpresso
+
+Note: TeXpresso performs only a single TeX pass. Documents that require a
+      table of contents or bibliography must have these built separately (e.g.
+      with `latexmk` or `biber`). TeXpresso will pick up the resulting `.aux`
+      files when sent SIGUSR1: >sh
+
+        killall -SIGUSR1 texpresso
+<
+Note: TeXpresso currently requires a XeTeX-compatible document.
+
+The compiler may be configured through the |g:vimtex_compiler_texpresso|
+option.
 
 ------------------------------------------------------------------------------
 GENERIC COMPILER                                      *vimtex-compiler-generic*
@@ -6054,6 +6159,44 @@ Note: Evince only supports synctex through DBus, which is not supported by
       information.
 
       [0]: https://github.com/peterbjorgensen/sved
+
+                                                           *vimtex-view-galley*
+Galley ~
+https://github.com/munepi/Galley
+Galley is a lightweight PDF previewer for macOS, designed for TeX/LaTeX
+authors with SyncTeX support as a core feature. It enforces a single-window
+policy (one source, one PDF, one window) and reloads the PDF automatically
+after recompilation. The VimTeX implementation supports forward search and
+uses a callback to update Galley after successful compilations.
+
+Configuration: >vim
+  let g:vimtex_view_method = 'galley'
+<
+By default Galley is opened and updated in the background. Set
+|g:vimtex_view_galley_activate| to 1 to bring it to the foreground and give it
+focus after a forward search.
+
+To configure inverse search: Select `Custom...` from the `SyncTeX` menu in the
+menu bar, then set the custom editor command from a terminal. With Vim or
+Neovim, respectively: >bash
+
+  defaults write com.github.munepi.galley customEditorCommand \
+      "/path/to/vim -v --not-a-term -T dumb -c \"VimtexInverseSearch %line '%file'\""
+
+  defaults write com.github.munepi.galley customEditorCommand \
+      "/path/to/nvim --headless -c \"VimtexInverseSearch %line '%file'\""
+<
+Replace `/path/to/vim` (or `nvim`) with the absolute path to your binary, e.g.
+`/opt/homebrew/bin/nvim` for a homebrew installation.
+
+Inverse search is then activated by `Command`-clicking in the PDF. The first
+forward search will trigger a macOS prompt asking for Automation permissions,
+which must be allowed. For more info on inverse search, see
+|vimtex-synctex-inverse-search|.
+
+Associated settings:
+* |g:vimtex_view_galley_activate|
+* |g:vimtex_view_galley_sync|
 
                                                             *vimtex-view-mupdf*
 MuPDF ~
