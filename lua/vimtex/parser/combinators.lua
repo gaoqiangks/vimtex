@@ -7,9 +7,7 @@
 -- https://github.com/jacoblusk/lua-parser-combinators
 --
 
----@type string
-local TARGET
-
+---
 ---@class ParserStateNewlines
 ---@field index integer
 ---@field count integer
@@ -17,6 +15,7 @@ local TARGET
 ---@class ParserState
 ---@field index integer
 ---@field prev_newlines ParserStateNewlines
+---@field target string
 ---@field result any?
 ---@field error string?
 local ParserState = {}
@@ -25,13 +24,15 @@ ParserState.__index = ParserState
 ---Create new state
 ---@param index integer
 ---@param prev_newlines ParserStateNewlines
+---@param target string
 ---@param result any?
 ---@param error string?
 ---@return ParserState
-function ParserState.new(index, prev_newlines, result, error)
+function ParserState.new(index, prev_newlines, target, result, error)
   return setmetatable({
     index = index,
     prev_newlines = prev_newlines,
+    target = target,
     result = result,
     error = error,
   }, ParserState)
@@ -41,8 +42,7 @@ end
 ---@param target string
 ---@return ParserState
 function ParserState.initial(target)
-  TARGET = target
-  return ParserState.new(1, { index = 1, count = 0 })
+  return ParserState.new(1, { index = 1, count = 0 }, target)
 end
 
 ---Use index as result and shift
@@ -51,7 +51,8 @@ function ParserState:shift()
   return ParserState.new(
     self.index + 1,
     self.prev_newlines,
-    TARGET:sub(self.index, self.index)
+    self.target,
+    self.target:sub(self.index, self.index)
   )
 end
 
@@ -59,21 +60,21 @@ end
 ---@param result any
 ---@return ParserState
 function ParserState:with_result(result)
-  return ParserState.new(self.index, self.prev_newlines, result, self.error)
+  return ParserState.new(self.index, self.prev_newlines, self.target, result, self.error)
 end
 
 ---Create new state with specified error
 ---@param error string
 ---@return ParserState
 function ParserState:with_error(error)
-  return ParserState.new(self.index, self.prev_newlines, self.result, error)
+  return ParserState.new(self.index, self.prev_newlines, self.target, self.result, error)
 end
 
 ---Create new state with specified result that drops error
 ---@param result any
 ---@return ParserState
 function ParserState:succeed(result)
-  return ParserState.new(self.index, self.prev_newlines, result)
+  return ParserState.new(self.index, self.prev_newlines, self.target, result)
 end
 
 ---Pretty print the parser state
@@ -89,7 +90,7 @@ function ParserState:__tostring()
       start = self.index - index + 1
       indicator = "┉" .. ("━"):rep(index - 2) .. "┑"
     end
-    local sub_target = TARGET:sub(start, start + length):gsub("\n", "↵")
+    local sub_target = self.target:sub(start, start + length):gsub("\n", "↵")
 
     return table.concat({
       "Error at index " .. self.index .. " — " .. self.error,
@@ -457,7 +458,7 @@ end
 
 ---Parser to check for end of input
 local eof = Parser:new(function(state)
-  if #TARGET < state.index then
+  if #state.target < state.index then
     return state:with_result(nil)
   end
 
@@ -466,16 +467,16 @@ end)
 
 ---Parser that puts current state to value and nothing more
 local peek = Parser:new(function(state)
-  if #TARGET < state.index then
+  if #state.target < state.index then
     return state:with_error "peek: unexpected end of input"
   end
 
-  return state:with_result(TARGET:sub(state.index, state.index))
+  return state:with_result(state.target:sub(state.index, state.index))
 end)
 
 ---Parser that accepts next input
 local shift = Parser:new(function(state)
-  if #TARGET < state.index then
+  if #state.target < state.index then
     return state:with_error "shift: unexpected end of input"
   end
 
@@ -487,7 +488,7 @@ local line_number = Parser:new(function(state)
   local count = state.prev_newlines.count
 
   for i = state.prev_newlines.index, state.index do
-    if TARGET:sub(i, i) == "\n" then
+    if state.target:sub(i, i) == "\n" then
       count = count + 1
     end
   end

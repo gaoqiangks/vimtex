@@ -433,7 +433,7 @@ function! s:completer_img.complete(regex) dict abort
 
   let l:candidates = []
   for l:path in b:vimtex.graphicspath + [b:vimtex.root]
-    let l:files = globpath(l:path, '**/*.*', 1, 1)
+    let l:files = s:glob_cached('**/*.*', l:path)
           \ ->filter({_, x ->
           \      x =~? self.ext_re
           \   && x !=# l:generated_pdf
@@ -462,11 +462,11 @@ let s:completer_inc = {
       \}
 
 function! s:completer_inc.complete(regex) dict abort
-  let l:candidates = globpath(b:vimtex.root, '**/*.tex', 0, 1)
+  let l:candidates = s:glob_cached('**/*.tex', b:vimtex.root, 0)
 
   " Add .tikz files if appropriate
   if has_key(b:vimtex.packages, 'tikz') && self.context !~# '\\subfile'
-    call extend(l:candidates, globpath(b:vimtex.root, '**/*.tikz', 0, 1))
+    call extend(l:candidates, s:glob_cached('**/*.tikz', b:vimtex.root, 0))
   endif
 
   if self.context =~# '\\include'
@@ -492,7 +492,7 @@ let s:completer_pdf = {
       \}
 
 function! s:completer_pdf.complete(regex) dict abort
-  let l:candidates = globpath(b:vimtex.root, '**/*.pdf', 0, 1)
+  let l:candidates = s:glob_cached('**/*.pdf', b:vimtex.root, 0)
         \ ->map({_, x -> #{
         \   word: vimtex#paths#relative(x, b:vimtex.root),
         \   kind: '[includepdf]',
@@ -510,7 +510,7 @@ let s:completer_sta = {
       \}
 
 function! s:completer_sta.complete(regex) dict abort
-  let l:candidates = globpath(b:vimtex.root, '**/*.tex', 0, 1)
+  let l:candidates = s:glob_cached('**/*.tex', b:vimtex.root, 0)
         \ ->map({_, x -> #{
         \ word: vimtex#paths#relative(x, b:vimtex.root)->fnamemodify(':r'),
         \ kind: '[includestandalone]',
@@ -880,6 +880,30 @@ function! s:filter_with_options(input, regex, opts) abort " {{{1
   endif
 
   return filter(a:input, l:Filter)
+endfunction
+
+" }}}1
+function! s:glob_cached(pattern, dir, ...) abort " {{{1
+  " Cached version of globpath(). Results are cached per-directory+pattern
+  " and invalidated when the project ftime changes.
+  let l:nosuf = a:0 > 0 ? a:1 : 1
+  let l:list = a:0 > 1 ? a:2 : 1
+
+  let l:cache = get(s:, 'glob_cache', {})
+  let s:glob_cache = l:cache
+
+  let l:ftime = b:vimtex.getftime()
+  let l:key = a:dir . "\n" . a:pattern . "\n" . l:nosuf
+
+  if has_key(l:cache, l:key) && l:cache[l:key].ftime == l:ftime
+    return copy(l:cache[l:key].result)
+  endif
+
+  let l:cache[l:key] = {
+        \ 'ftime': l:ftime,
+        \ 'result': globpath(a:dir, a:pattern, l:nosuf, l:list),
+        \}
+  return copy(l:cache[l:key].result)
 endfunction
 
 " }}}1

@@ -26,8 +26,11 @@ function! vimtex#jobs#start(cmd, ...) abort " {{{1
   let l:job.detached = get(l:opts, 'detached', v:false)
   call l:job.start()
 
-  " Add some minor delay to ensure the job was properly started
-  sleep 100m
+  " Add some minor delay to ensure the job was properly started.
+  " Not needed for neovim where jobstart is synchronous.
+  if s:backend !=# 'neovim'
+    sleep 50m
+  endif
 
   return l:job
 endfunction
@@ -70,7 +73,9 @@ endfunction
 " }}}1
 function! vimtex#jobs#cached(cmd) abort " {{{1
   " Cached version of vimtex#jobs#capture(...)
-  let l:cache = vimtex#cache#open('capture')
+  " Uses volatile cache since external command results are only valid
+  " for the current session.
+  let l:cache = vimtex#cache#open('capture', {'persistent': v:false})
 
   return l:cache.has(a:cmd)
         \ ? l:cache.get(a:cmd)
