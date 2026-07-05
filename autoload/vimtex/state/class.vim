@@ -138,7 +138,17 @@ endfunction
 
 " }}}1
 function! s:vimtex.getftime() abort dict " {{{1
-  return max(map(self.get_sources(), 'getftime(self.root . ''/'' . v:val)'))
+  " Cache ftime for 1 second to avoid repeated file stat calls
+  " during the same event loop iteration (e.g. completion triggers).
+  let l:now = localtime()
+  if has_key(self, '__getftime_cache') && l:now == self.__getftime_cache.ts
+    return self.__getftime_cache.value
+  endif
+  let self.__getftime_cache = {
+        \ 'ts': l:now,
+        \ 'value': max(map(self.get_sources(), 'getftime(self.root . ''/'' . v:val)')),
+        \}
+  return self.__getftime_cache.value
 endfunction
 
 " }}}1

@@ -199,6 +199,9 @@ function! s:get_main_id(main) abort " {{{1
 endfunction
 
 function! s:get_main() abort " {{{1
+  " Initialize cache for file_reaches_current results during main detection
+  let s:reachable_cache = {}
+
   " Use buffer variable if it exists
   if exists('b:vimtex_main') && filereadable(b:vimtex_main)
     return [fnamemodify(b:vimtex_main, ':p'), 'buffer variable', []]
@@ -423,9 +426,8 @@ function! s:get_main_recurse(...) abort " {{{1
     if index(l:tried[l:file], l:cand) >= 0 | continue | endif
     call add(l:tried[l:file], l:cand)
 
-    if len(filter(filter(readfile(l:cand),
-          \ 'v:val =~# l:re_filter1'),
-          \ 'v:val =~# l:re_filter2')) > 0
+    if len(filter(readfile(l:cand),
+          \ 'v:val =~# l:re_filter1 && v:val =~# l:re_filter2')) > 0
       let l:results += s:get_main_recurse(fnamemodify(l:cand, ':p'), l:tried)
     endif
   endfor
@@ -449,9 +451,8 @@ function! s:get_main_recurse_from_bib() abort " {{{1
     if index(l:tried[l:file], l:cand) >= 0 | continue | endif
     call add(l:tried[l:file], l:cand)
 
-    if len(filter(filter(readfile(l:cand),
-          \ 'v:val =~# l:re_filter1'),
-          \ 'v:val =~# l:re_filter2')) > 0
+    if len(filter(readfile(l:cand),
+          \ 'v:val =~# l:re_filter1 && v:val =~# l:re_filter2')) > 0
       let l:results += s:get_main_recurse(fnamemodify(l:cand, ':p'), l:tried)
     endif
   endfor
@@ -520,12 +521,26 @@ endfunction
 
 " }}}1
 function! s:file_reaches_current(file, ...) abort " {{{1
+  " Check cache first (populated during s:get_main() invocation)
+  if exists('s:reachable_cache')
+    let l:cache_key = a:file . '|' . expand('%:p')
+    if has_key(s:reachable_cache, l:cache_key)
+      return s:reachable_cache[l:cache_key]
+    endif
+  endif
+
   let l:visited = a:0 > 0 ? a:1 : []
 
   " Note: This function assumes that the input a:file is an absolute path
-  if !filereadable(a:file) | return 0 | endif
+  if !filereadable(a:file)
+    let s:reachable_cache[l:cache_key] = 0
+    return 0
+  endif
 
-  if index(l:visited, a:file) >= 0 | return 0 | endif
+  if index(l:visited, a:file) >= 0
+    let s:reachable_cache[l:cache_key] = 0
+    return 0
+  endif
   call add(l:visited, a:file)
 
   for l:line in filter(readfile(a:file), 'v:val =~# g:vimtex#re#tex_input')
@@ -543,10 +558,12 @@ function! s:file_reaches_current(file, ...) abort " {{{1
     endif
 
     if expand('%:p') ==# l:file || s:file_reaches_current(l:file, l:visited)
+      let s:reachable_cache[l:cache_key] = 1
       return 1
     endif
   endfor
 
+  let s:reachable_cache[l:cache_key] = 0
   return 0
 endfunction
 
