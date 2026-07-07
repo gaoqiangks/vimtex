@@ -257,6 +257,13 @@ function! s:get_main() abort " {{{1
     endif
   endif
 
+  " Check if current file belongs to an existing vimtex project
+  " This handles files shared between projects (e.g. \input{../other/file.tex})
+  let l:candidate = s:get_main_from_existing_projects()
+  if !empty(l:candidate)
+    return [l:candidate, 'existing project', []]
+  endif
+
   " Search for main file recursively through include specifiers
   if &filetype ==# 'tex'
     let l:candidate = s:get_main_choose(s:get_main_recurse())
@@ -458,6 +465,35 @@ function! s:get_main_recurse_from_bib() abort " {{{1
   endfor
 
   return l:results
+endfunction
+
+" }}}1
+function! s:get_main_from_existing_projects() abort " {{{1
+  " Check if the current file is already part of an existing vimtex project.
+  " This handles the case where a file (e.g. a1.tex) is shared between
+  " multiple projects through \input{../a/a1.tex} and the recursive search
+  " would only find the project in the file's own directory.
+  if &filetype !=# 'tex' && &filetype !=# 'bib'
+    return ''
+  endif
+
+  let l:current = expand('%:p')
+  let l:candidates = []
+
+  for [l:id, l:state] in items(s:vimtex_states)
+    " Skip states without a tex main file (e.g., standalone cls/sty)
+    if empty(get(l:state, 'tex', '')) | continue | endif
+
+    " Check if this project's main file can reach the current file
+    " through \input chains
+    if s:file_reaches_current(l:state.tex)
+      call add(l:candidates, l:state.tex)
+    endif
+  endfor
+
+  if empty(l:candidates) | return '' | endif
+
+  return s:get_main_choose(l:candidates)
 endfunction
 
 " }}}1
